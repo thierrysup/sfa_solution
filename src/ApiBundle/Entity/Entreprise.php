@@ -85,16 +85,6 @@ class Entreprise
      */
     private $activities;
 
-    /**
-     * @var User[] Available users for this entreprise.
-     *
-     * @ORM\OneToMany(targetEntity="AppBundle\Entity\User", mappedBy="entreprise",cascade={"remove"}, orphanRemoval=true)
-     * @Type("ArrayCollection<AppBundle\Entity\User>")
-     */
-    private $users;
-
-
-
 
     /**
      * Get id

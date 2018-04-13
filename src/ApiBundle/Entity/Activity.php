@@ -71,7 +71,7 @@ class Activity
     private $entreprise;
 
     /**
-     * @var Product[] Available products for this acti.
+     * @var Product[] Available products for this activity.
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Product", mappedBy="activity",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Product>")

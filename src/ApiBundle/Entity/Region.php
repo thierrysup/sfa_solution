@@ -44,6 +44,14 @@ class Region
 
 
     /**
+     * @var Product[] Available targets for this product.
+     *
+     * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Target", mappedBy="product",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\Target>")
+     */
+    private $targets;
+
+    /**
      * Get id
      *
      * @return int

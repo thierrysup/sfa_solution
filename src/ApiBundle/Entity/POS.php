@@ -56,6 +56,33 @@ class POS
      */
     private $description;
 
+    /**
+     * @var Survey[] Available Surveys for this Pos.
+     *
+     * @ORM\OneToMany(SurveyEntity="ApiBundle\Entity\Survey", mappedBy="pos",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\Survey>")
+     */
+    private $surveys;
+
+    /**
+     * @var ActivityUser[] Available ActivityUsers for this POS.
+     *
+     * @ORM\OneToMany(ActivityUserEntity="ApiBundle\Entity\ActivityUser", mappedBy="pos",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     */
+    private $activityUsers;
+
+
+    /**
+     * @var Quarter The quarter this pos is about.
+     *
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Quarter", inversedBy="poss",cascade={"persist"})
+     * @ORM\JoinColumn(name="quarter_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Quarter")
+     * @MaxDepth(1)
+     */
+    private $quarter;
+
 
     /**
      * Get id

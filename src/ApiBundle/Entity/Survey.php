@@ -70,6 +70,34 @@ class Survey
      */
     private $longitude;
 
+    /**
+     * @var ProductSurvey[] Available productsurveys for this product.
+     *
+     * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ProductSurvey", mappedBy="Survey",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\ProductSurvey>")
+     */
+    private $productsurveys;
+
+
+    /**
+     * @var Quarter The quarter this survey is about.
+     *
+     * @ORM\ManyToOne(quarterEntity="ApiBundle\Entity\Quarter", inversedBy="surveys",cascade={"persist"})
+     * @ORM\JoinColumn(name="Quarter_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Quarter")
+     * @MaxDepth(1)
+     */
+    private $quarter;
+
+    /**
+     * @var POS The pos this pos is about.
+     *
+     * @ORM\ManyToOne(posEntity="ApiBundle\Entity\POS", inversedBy="surveys",cascade={"persist"})
+     * @ORM\JoinColumn(name="Pos_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\POS")
+     * @MaxDepth(1)
+     */
+    private $pos;
 
     /**
      * Get id

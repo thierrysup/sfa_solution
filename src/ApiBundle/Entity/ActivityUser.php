@@ -56,6 +56,8 @@ class ActivityUser
      */
     private $status;
 
+    
+
 
     /**
      * Get id

@@ -44,6 +44,22 @@ class Quarter
 
 
     /**
+     * @var Quarter[] Available Surveys for this Quarter.
+     *
+     * @ORM\OneToMany(SurveyEntity="ApiBundle\Entity\Survey", mappedBy="Quarter",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\Survey>")
+     */
+    private $surveys;
+
+    /**
+     * @var POS[] Available pos for this Quarter.
+     *
+     * @ORM\OneToMany(ActivityUserEntity="ApiBundle\Entity\POS", mappedBy="quarters",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\POS>")
+     */
+    private $poss;
+
+    /**
      * Get id
      *
      * @return int

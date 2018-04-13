@@ -49,6 +49,26 @@ class ProductSurvey
      */
     private $status;
 
+     /**
+     * @var Product The product this productSurvey is about.
+     *
+     * @ORM\ManyToOne(productEntity="ApiBundle\Entity\Product", inversedBy="productSurveys",cascade={"persist"})
+     * @ORM\JoinColumn(name="product_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Product")
+     * @MaxDepth(1)
+     */
+    private $product;
+
+
+     /**
+     * @var Survey The Survey this productSurvey is about.
+     *
+     * @ORM\ManyToOne(surveyEntity="ApiBundle\Entity\Survey", inversedBy="productSurveys",cascade={"persist"})
+     * @ORM\JoinColumn(name="survey_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Survey")
+     * @MaxDepth(1)
+     */
+    private $survey;
 
     /**
      * Get id

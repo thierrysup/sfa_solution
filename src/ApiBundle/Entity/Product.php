@@ -73,6 +73,22 @@ class Product
      */
     private $activity;
 
+    /**
+     * @var Product[] Available targets for this product.
+     *
+     * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Target", mappedBy="product",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\Target>")
+     */
+    private $targets;
+
+    /**
+     * @var ProductSurvey[] Available productsurveys for this product.
+     *
+     * @ORM\OneToMany(surveyEntity="ApiBundle\Entity\ProductSurvey", mappedBy="product",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\ProductSurvey>")
+     */
+    private $productsurveys;
+
 
     /**
      * Get id

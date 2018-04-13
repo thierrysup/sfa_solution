@@ -55,6 +55,28 @@ class Target
      * @ORM\Column(name="status", type="boolean")
      */
     private $status;
+    
+
+    /**
+     * @var Product The product this target is about.
+     *
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Product", inversedBy="targets",cascade={"persist"})
+     * @ORM\JoinColumn(name="product_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Product")
+     * @MaxDepth(1)
+     */
+    private $product;
+
+    
+    /**
+     * @var Region The Region this target is about.
+     *
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Region", inversedBy="targets",cascade={"persist"})
+     * @ORM\JoinColumn(name="region_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Region")
+     * @MaxDepth(1)
+     */
+    private $region;
 
 
     /**
