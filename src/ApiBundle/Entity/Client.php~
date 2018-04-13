@@ -1,0 +1,52 @@
+<?php
+
+namespace ApiBundle\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+
+
+/**
+ * Client
+ *
+ * @ORM\Table(name="client")
+ * @ORM\Entity(repositoryClass="ApiBundle\Repository\ClientRepository")
+ */
+class Client
+{
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
+     */
+    private $id;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="name", type="string", length=30)
+     */
+    private $name;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="age", type="integer")
+     */
+    private $age;
+
+    /**
+     * @var Article[] Available article for this client.
+     *
+     * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Article", mappedBy="client")
+     */
+    private $articles;
+
+    public function __construct()
+    {
+        $this->articles = new ArrayCollection();
+    }
+
+}

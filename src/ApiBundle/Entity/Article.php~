@@ -1,0 +1,48 @@
+<?php
+
+namespace ApiBundle\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * Article
+ *
+ * @ORM\Table(name="article")
+ * @ORM\Entity(repositoryClass="ApiBundle\Repository\ArticleRepository")
+ */
+class Article
+{
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
+     */
+    private $id;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="intitule", type="string", length=30)
+     */
+    private $intitule;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="nombre", type="integer")
+     */
+    private $nombre;
+
+    /**
+     * @var Client The client this article is about.
+     *
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Client", inversedBy="articles")
+     * @ORM\JoinColumn(nullable=true)
+     */
+    private $client;
+
+
+    
+}
