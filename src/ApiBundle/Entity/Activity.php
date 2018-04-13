@@ -49,6 +49,35 @@ class Activity
      */
     private $status;
 
+    
+    /**
+     * @var int
+     *
+     * product 1
+     * service 0
+     *
+     * @ORM\Column(name="typeActivity", type="integer")
+     */
+    private $type_activity;
+
+    /**
+     * @var Entreprise The entreprise this activity is about.
+     *
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Entreprise", inversedBy="activities",cascade={"persist"})
+     * @ORM\JoinColumn(name="entreprise_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Entreprise")
+     * @MaxDepth(1)
+     */
+    private $entreprise;
+
+    /**
+     * @var Product[] Available products for this acti.
+     *
+     * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Product", mappedBy="activity",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\Product>")
+     */
+    private $products;
+
 
     /**
      * Get id

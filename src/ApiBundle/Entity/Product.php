@@ -63,6 +63,16 @@ class Product
      */
     private $dateCreate;
 
+    /**
+     * @var Activity The activity this product is about.
+     *
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Activity", inversedBy="products",cascade={"persist"})
+     * @ORM\JoinColumn(name="activity_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Activity")
+     * @MaxDepth(1)
+     */
+    private $activity;
+
 
     /**
      * Get id
