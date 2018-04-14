@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Sector</h1>
+
+    <table>
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ sector.id }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>{{ sector.name }}</td>
+            </tr>
+            <tr>
+                <th>Code</th>
+                <td>{{ sector.code }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ sector.description }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{% if sector.status %}Yes{% else %}No{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('sector_index') }}">Back to the list</a>
+        </li>
+        <li>
+            <a href="{{ path('sector_edit', { 'id': sector.id }) }}">Edit</a>
+        </li>
+        <li>
+            {{ form_start(delete_form) }}
+                <input type="submit" value="Delete">
+            {{ form_end(delete_form) }}
+        </li>
+    </ul>
+{% endblock %}

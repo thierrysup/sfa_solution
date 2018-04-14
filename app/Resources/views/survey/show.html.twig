@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Survey</h1>
+
+    <table>
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ survey.id }}</td>
+            </tr>
+            <tr>
+                <th>Datesubmit</th>
+                <td>{% if survey.dateSubmit %}{{ survey.dateSubmit|date('Y-m-d') }}{% endif %}</td>
+            </tr>
+            <tr>
+                <th>Commit</th>
+                <td>{{ survey.commit }}</td>
+            </tr>
+            <tr>
+                <th>Actorname</th>
+                <td>{{ survey.actorName }}</td>
+            </tr>
+            <tr>
+                <th>Actorphone</th>
+                <td>{{ survey.actorPhone }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{% if survey.status %}Yes{% else %}No{% endif %}</td>
+            </tr>
+            <tr>
+                <th>Lattitude</th>
+                <td>{{ survey.lattitude }}</td>
+            </tr>
+            <tr>
+                <th>Longitude</th>
+                <td>{{ survey.longitude }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('survey_index') }}">Back to the list</a>
+        </li>
+        <li>
+            <a href="{{ path('survey_edit', { 'id': survey.id }) }}">Edit</a>
+        </li>
+        <li>
+            {{ form_start(delete_form) }}
+                <input type="submit" value="Delete">
+            {{ form_end(delete_form) }}
+        </li>
+    </ul>
+{% endblock %}

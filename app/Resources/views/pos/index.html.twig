@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Poss list</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Adresse</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for pO in pOSs %}
+            <tr>
+                <td><a href="{{ path('pos_show', { 'id': pO.id }) }}">{{ pO.id }}</a></td>
+                <td>{{ pO.name }}</td>
+                <td>{{ pO.adresse }}</td>
+                <td>{{ pO.phone }}</td>
+                <td>{% if pO.status %}Yes{% else %}No{% endif %}</td>
+                <td>{{ pO.description }}</td>
+                <td>
+                    <ul>
+                        <li>
+                            <a href="{{ path('pos_show', { 'id': pO.id }) }}">show</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('pos_edit', { 'id': pO.id }) }}">edit</a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('pos_new') }}">Create a new pO</a>
+        </li>
+    </ul>
+{% endblock %}

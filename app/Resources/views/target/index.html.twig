@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Targets list</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Quantity</th>
+                <th>Startdate</th>
+                <th>Enddate</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for target in targets %}
+            <tr>
+                <td><a href="{{ path('target_show', { 'id': target.id }) }}">{{ target.id }}</a></td>
+                <td>{{ target.quantity }}</td>
+                <td>{% if target.startDate %}{{ target.startDate|date('Y-m-d') }}{% endif %}</td>
+                <td>{% if target.endDate %}{{ target.endDate|date('Y-m-d') }}{% endif %}</td>
+                <td>{{ target.description }}</td>
+                <td>{% if target.status %}Yes{% else %}No{% endif %}</td>
+                <td>
+                    <ul>
+                        <li>
+                            <a href="{{ path('target_show', { 'id': target.id }) }}">show</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('target_edit', { 'id': target.id }) }}">edit</a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('target_new') }}">Create a new target</a>
+        </li>
+    </ul>
+{% endblock %}

@@ -1,3 +1,55 @@
+api_target:
+    resource: "@ApiBundle/Controller/TargetController.php"
+    type:     annotation
+
+api_survey:
+    resource: "@ApiBundle/Controller/SurveyController.php"
+    type:     annotation
+
+api_role:
+    resource: "@ApiBundle/Controller/RoleController.php"
+    type:     annotation
+
+api_product_survey:
+    resource: "@ApiBundle/Controller/ProductSurveyController.php"
+    type:     annotation
+
+api_product:
+    resource: "@ApiBundle/Controller/ProductController.php"
+    type:     annotation
+
+api_entreprise:
+    resource: "@ApiBundle/Controller/EntrepriseController.php"
+    type:     annotation
+
+api_pos:
+    resource: "@ApiBundle/Controller/POSController.php"
+    type:     annotation
+
+api_quarter:
+    resource: "@ApiBundle/Controller/QuarterController.php"
+    type:     annotation
+
+api_sector:
+    resource: "@ApiBundle/Controller/SectorController.php"
+    type:     annotation
+
+api_town:
+    resource: "@ApiBundle/Controller/TownController.php"
+    type:     annotation
+
+api_region:
+    resource: "@ApiBundle/Controller/RegionController.php"
+    type:     annotation
+
+api_country:
+    resource: "@ApiBundle/Controller/CountryController.php"
+    type:     annotation
+
+app_user:
+    resource: "@AppBundle/Controller/UserController.php"
+    type:     annotation
+
 api:
     resource: "@ApiBundle/Controller/"
     type:     annotation

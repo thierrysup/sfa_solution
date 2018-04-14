@@ -3,12 +3,16 @@
 namespace ApiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Type;
+use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Sector
  *
  * @ORM\Table(name="sector")
  * @ORM\Entity(repositoryClass="ApiBundle\Repository\SectorRepository")
+ * @Serializer\ExclusionPolicy("none")
  */
 class Sector
 {
@@ -18,6 +22,7 @@ class Sector
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
+     * @Type("int")
      */
     private $id;
 
@@ -25,6 +30,7 @@ class Sector
      * @var string
      *
      * @ORM\Column(name="name", type="string", length=255)
+     * @Type("string")
      */
     private $name;
 
@@ -32,6 +38,7 @@ class Sector
      * @var string
      *
      * @ORM\Column(name="code", type="string", length=15)
+     * @Type("string")
      */
     private $code;
 
@@ -39,6 +46,7 @@ class Sector
      * @var string
      *
      * @ORM\Column(name="description", type="string", length=255)
+     * @Type("string")
      */
     private $description;
 
@@ -46,8 +54,35 @@ class Sector
      * @var bool
      *
      * @ORM\Column(name="status", type="boolean")
+     * @Type("boolean")
      */
     private $status;
+
+    /**
+     * @var ActivityUser[] Available ActivityUsers for this sector.
+     *
+     * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="sector",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     */
+    private $activityUsers;
+
+    /**
+     * @var Quarter[] Available quarter for this sector.
+     *
+     * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Quarter", mappedBy="sector",cascade={"remove"}, orphanRemoval=true)
+     * @Type("ArrayCollection<ApiBundle\Entity\Quarter>")
+     */
+    private $quarters;
+
+    /**
+     * @var Town The town this sector is about.
+     *
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Town", inversedBy="sectors",cascade={"persist"})
+     * @ORM\JoinColumn(name="town_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("ApiBundle\Entity\Town")
+     * @MaxDepth(1)
+     */
+    private $town;
 
 
     /**
@@ -155,5 +190,103 @@ class Sector
     {
         return $this->status;
     }
-}
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->activityUsers = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
+    /**
+     * Add activityUser
+     *
+     * @param \ApiBundle\Entity\ActivityUser $activityUser
+     *
+     * @return Sector
+     */
+    public function addActivityUser(\ApiBundle\Entity\ActivityUser $activityUser)
+    {
+        $this->activityUsers[] = $activityUser;
+
+        return $this;
+    }
+
+    /**
+     * Remove activityUser
+     *
+     * @param \ApiBundle\Entity\ActivityUser $activityUser
+     */
+    public function removeActivityUser(\ApiBundle\Entity\ActivityUser $activityUser)
+    {
+        $this->activityUsers->removeElement($activityUser);
+    }
+
+    /**
+     * Get activityUsers
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getActivityUsers()
+    {
+        return $this->activityUsers;
+    }
+
+    /**
+     * Add quarter
+     *
+     * @param \ApiBundle\Entity\Quarter $quarter
+     *
+     * @return Sector
+     */
+    public function addQuarter(\ApiBundle\Entity\Quarter $quarter)
+    {
+        $this->quarters[] = $quarter;
+
+        return $this;
+    }
+
+    /**
+     * Remove quarter
+     *
+     * @param \ApiBundle\Entity\Quarter $quarter
+     */
+    public function removeQuarter(\ApiBundle\Entity\Quarter $quarter)
+    {
+        $this->quarters->removeElement($quarter);
+    }
+
+    /**
+     * Get quarters
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getQuarters()
+    {
+        return $this->quarters;
+    }
+
+    /**
+     * Set town
+     *
+     * @param \ApiBundle\Entity\Town $town
+     *
+     * @return Sector
+     */
+    public function setTown(\ApiBundle\Entity\Town $town = null)
+    {
+        $this->town = $town;
+
+        return $this;
+    }
+
+    /**
+     * Get town
+     *
+     * @return \ApiBundle\Entity\Town
+     */
+    public function getTown()
+    {
+        return $this->town;
+    }
+}
