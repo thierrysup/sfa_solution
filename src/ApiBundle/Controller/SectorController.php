@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Sector;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Sector controller.
@@ -23,12 +28,14 @@ class SectorController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $sectors = $em->getRepository('ApiBundle:Sector')->findAll();
-
-        return $this->render('sector/index.html.twig', array(
-            'sectors' => $sectors,
-        ));
+        
+                $sectors = $em->getRepository('ApiBundle:Sector')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $sectors = $serializer->serialize($sectors, 'json');
+        
+                $response =  new Response($sectors, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,25 @@ class SectorController extends Controller
      */
     public function newAction(Request $request)
     {
-        $sector = new Sector();
-        $form = $this->createForm('ApiBundle\Form\SectorType', $sector);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($sector);
-            $em->flush($sector);
-
-            return $this->redirectToRoute('sector_show', array('id' => $sector->getId()));
-        }
-
-        return $this->render('sector/new.html.twig', array(
-            'sector' => $sector,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $sector = $serializer->deserialize($data,'ApiBundle\Entity\Sector', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $sector->setTown($this->getDoctrine()
+        ->getRepository('ApiBundle:Town')
+        ->findOneBy(['id' => $sector->getTown()->getId()]));
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($sector);
+    
+        // Save our country
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +73,20 @@ class SectorController extends Controller
      * @Route("/{id}", name="sector_show")
      * @Method("GET")
      */
-    public function showAction(Sector $sector)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($sector);
-
-        return $this->render('sector/show.html.twig', array(
-            'sector' => $sector,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $sector = $this->getDoctrine()
+        ->getRepository('ApiBundle:Sector')
+        ->findOneBy(['id' => $id]);
+    
+        if ($sector === null) {
+            return new JsonResponse("sector not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $sector = $serializer->serialize($sector, 'json');
+    
+      $response =  new Response($sector, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +95,32 @@ class SectorController extends Controller
      * @Route("/{id}/edit", name="sector_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, Sector $sector)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($sector);
-        $editForm = $this->createForm('ApiBundle\Form\SectorType', $sector);
-        $editForm->handleRequest($request);
+        $sector = $this->getDoctrine()
+        ->getRepository('ApiBundle:Sector')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('sector_edit', array('id' => $sector->getId()));
-        }
+        //now we want to deserialize data request to sector object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Sector', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $sector->setName($entity->getName());
+        $sector->setDescription($entity->getDescription()); 
+        $sector->setStatus($entity->getStatus());
+        $sector->setCode($entity->getCode());
+        $sector->setTown($this->getDoctrine()
+        ->getRepository('ApiBundle:Town')
+        ->findOneBy(['id' => $entity->getTown()->getId()]));
+        
+        // Save our sector
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
 
-        return $this->render('sector/edit.html.twig', array(
-            'sector' => $sector,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
     }
 
     /**
@@ -104,33 +129,21 @@ class SectorController extends Controller
      * @Route("/{id}", name="sector_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, Sector $sector)
+    public function deleteAction(Request $request, $id)
     {
-        $form = $this->createDeleteForm($sector);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($sector);
-            $em->flush($sector);
-        }
-
-        return $this->redirectToRoute('sector_index');
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $sector = $this->getDoctrine()->getRepository('ApiBundle:Sector')->find($id);
+      if (empty($sector)) {
+        $response =  new JsonResponse('sector not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($sector);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a sector entity.
-     *
-     * @param Sector $sector The sector entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Sector $sector)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('sector_delete', array('id' => $sector->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }

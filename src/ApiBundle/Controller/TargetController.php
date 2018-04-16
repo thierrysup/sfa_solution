@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Target;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Target controller.
@@ -23,12 +28,14 @@ class TargetController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $targets = $em->getRepository('ApiBundle:Target')->findAll();
-
-        return $this->render('target/index.html.twig', array(
-            'targets' => $targets,
-        ));
+        
+                $target = $em->getRepository('ApiBundle:Target')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $target = $serializer->serialize($target, 'json');
+        
+                $response =  new Response($target, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,28 @@ class TargetController extends Controller
      */
     public function newAction(Request $request)
     {
-        $target = new Target();
-        $form = $this->createForm('ApiBundle\Form\TargetType', $target);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($target);
-            $em->flush($target);
-
-            return $this->redirectToRoute('target_show', array('id' => $target->getId()));
-        }
-
-        return $this->render('target/new.html.twig', array(
-            'target' => $target,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $target = $serializer->deserialize($data,'ApiBundle\Entity\Target', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $target->setProduct($this->getDoctrine()
+        ->getRepository('ApiBundle:Product')
+        ->findOneBy(['id' => $target->getProduct()->getId()]));
+        $target->setRegion($this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $target->getRegion()->getId()]));
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($target);
+    
+        // Save our target
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +76,20 @@ class TargetController extends Controller
      * @Route("/{id}", name="target_show")
      * @Method("GET")
      */
-    public function showAction(Target $target)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($target);
-
-        return $this->render('target/show.html.twig', array(
-            'target' => $target,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $target = $this->getDoctrine()
+        ->getRepository('ApiBundle:Target')
+        ->findOneBy(['id' => $id]);
+    
+        if ($target === null) {
+            return new JsonResponse("target not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $target = $serializer->serialize($target, 'json');
+    
+      $response =  new Response($target, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +98,37 @@ class TargetController extends Controller
      * @Route("/{id}/edit", name="target_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, Target $target)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($target);
-        $editForm = $this->createForm('ApiBundle\Form\TargetType', $target);
-        $editForm->handleRequest($request);
+        $target = $this->getDoctrine()
+        ->getRepository('ApiBundle:Target')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('target_edit', array('id' => $target->getId()));
-        }
+        //now we want to deserialize data request to target object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Target', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $target->setQuantity($entity->getQuantity());
+        $target->setStartDate($entity->getStartDate()); 
+        $target->setEndDate($entity->getEndDate());
+        $target->setDescription($entity->getDescription());
+        $target->setStatus($entity->getStatus());
+        $target->setProduct($this->getDoctrine()
+        ->getRepository('ApiBundle:Product')
+        ->findOneBy(['id' => $entity->getProduct()->getId()]));
+        $target->setRegion($this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $entity->getRegion()->getId()]));
 
-        return $this->render('target/edit.html.twig', array(
-            'target' => $target,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+
+        // Save our target
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
+
     }
 
     /**
@@ -104,33 +137,22 @@ class TargetController extends Controller
      * @Route("/{id}", name="target_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, Target $target)
+    public function deleteAction(Request $request,$id)
     {
-        $form = $this->createDeleteForm($target);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($target);
-            $em->flush($target);
-        }
-
-        return $this->redirectToRoute('target_index');
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $target = $this->getDoctrine()->getRepository('ApiBundle:Target')->find($id);
+      if (empty($target)) {
+        $response =  new JsonResponse('target not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($target);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a target entity.
-     *
-     * @param Target $target The target entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Target $target)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('target_delete', array('id' => $target->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
+   
 }

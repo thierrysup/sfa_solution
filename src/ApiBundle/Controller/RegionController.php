@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Region;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Region controller.
@@ -23,12 +28,14 @@ class RegionController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $regions = $em->getRepository('ApiBundle:Region')->findAll();
-
-        return $this->render('region/index.html.twig', array(
-            'regions' => $regions,
-        ));
+        
+                $regions = $em->getRepository('ApiBundle:Region')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $regions = $serializer->serialize($regions, 'json');
+        
+                $response =  new Response($regions, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,25 @@ class RegionController extends Controller
      */
     public function newAction(Request $request)
     {
-        $region = new Region();
-        $form = $this->createForm('ApiBundle\Form\RegionType', $region);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($region);
-            $em->flush($region);
-
-            return $this->redirectToRoute('region_show', array('id' => $region->getId()));
-        }
-
-        return $this->render('region/new.html.twig', array(
-            'region' => $region,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $region = $serializer->deserialize($data,'ApiBundle\Entity\Region', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $region->setCountry($this->getDoctrine()
+        ->getRepository('ApiBundle:Country')
+        ->findOneBy(['id' => $region->getCountry()->getId()]));
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($region);
+    
+        // Save our country
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +73,21 @@ class RegionController extends Controller
      * @Route("/{id}", name="region_show")
      * @Method("GET")
      */
-    public function showAction(Region $region)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($region);
 
-        return $this->render('region/show.html.twig', array(
-            'region' => $region,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $region = $this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $id]);
+    
+        if ($region === null) {
+            return new JsonResponse("region not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $region = $serializer->serialize($region, 'json');
+    
+      $response =  new Response($region, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +96,30 @@ class RegionController extends Controller
      * @Route("/{id}/edit", name="region_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, Region $region)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($region);
-        $editForm = $this->createForm('ApiBundle\Form\RegionType', $region);
-        $editForm->handleRequest($request);
+        $region = $this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('region_edit', array('id' => $region->getId()));
-        }
-
-        return $this->render('region/edit.html.twig', array(
-            'region' => $region,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+        //now we want to deserialize data request to article object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Region', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $region->setName($entity->getName());
+        $region->setDescription($entity->getDescription()); 
+        $region->setStatus($entity->getStatus());
+        $region->setContry($this->getDoctrine()
+        ->getRepository('ApiBundle:Country')
+        ->findOneBy(['id' => $entity->getCountry()->getId()]));
+        
+        // Save our article
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
     }
 
     /**
@@ -104,33 +128,22 @@ class RegionController extends Controller
      * @Route("/{id}", name="region_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, Region $region)
+    public function deleteAction(Request $request, $id)
     {
-        $form = $this->createDeleteForm($region);
-        $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($region);
-            $em->flush($region);
-        }
-
-        return $this->redirectToRoute('region_index');
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $region = $this->getDoctrine()->getRepository('ApiBundle:Region')->find($id);
+      if (empty($region)) {
+        $response =  new JsonResponse('region not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($region);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a region entity.
-     *
-     * @param Region $region The region entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Region $region)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('region_delete', array('id' => $region->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }

@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\ActivityUser;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Activityuser controller.
@@ -23,12 +28,14 @@ class ActivityUserController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $activityUsers = $em->getRepository('ApiBundle:ActivityUser')->findAll();
-
-        return $this->render('activityuser/index.html.twig', array(
-            'activityUsers' => $activityUsers,
-        ));
+        
+                $activityUser = $em->getRepository('ApiBundle:activityUser')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $activityUser = $serializer->serialize($activityUser, 'json');
+        
+                $response =  new Response($activityUser, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,58 @@ class ActivityUserController extends Controller
      */
     public function newAction(Request $request)
     {
-        $activityUser = new Activityuser();
-        $form = $this->createForm('ApiBundle\Form\ActivityUserType', $activityUser);
-        $form->handleRequest($request);
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $activityUser = $serializer->deserialize($data,'ApiBundle\Entity\ActivityUser', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $activityUser->setPos($this->getDoctrine()
+        ->getRepository('ApiBundle:Pos')
+        ->findOneBy(['id' => $activityUser->getPos()->getId()]));
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($activityUser);
-            $em->flush($activityUser);
+        $activityUser->setTown($this->getDoctrine()
+        ->getRepository('ApiBundle:Town')
+        ->findOneBy(['id' => $activityUser->getTown()->getId()]));
 
-            return $this->redirectToRoute('activityuser_show', array('id' => $activityUser->getId()));
-        }
+        $activityUser->setQuarter($this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $activityUser->getQuarter()->getId()]));
 
-        return $this->render('activityuser/new.html.twig', array(
-            'activityUser' => $activityUser,
-            'form' => $form->createView(),
-        ));
+        $activityUser->setSector($this->getDoctrine()
+        ->getRepository('ApiBundle:Sector')
+        ->findOneBy(['id' => $activityUser->getSector()->getId()]));
+
+        $activityUser->setRegion($this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $activityUser->getRegion()->getId()]));
+
+        $activityUser->setCountry($this->getDoctrine()
+        ->getRepository('ApiBundle:Country')
+        ->findOneBy(['id' => $activityUser->getCountry()->getId()]));
+
+        $activityUser->setRole($this->getDoctrine()
+        ->getRepository('ApiBundle:Role')
+        ->findOneBy(['id' => $activityUser->getRole()->getId()]));
+
+        $activityUser->setUser($this->getDoctrine()
+        ->getRepository('ApiBundle:User')
+        ->findOneBy(['id' => $activityUser->getUser()->getId()]));
+
+        $activityUser->setActivity($this->getDoctrine()
+        ->getRepository('ApiBundle:Activity')
+        ->findOneBy(['id' => $activityUser->getActivity()->getId()]));
+
+
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($activityUser);
+    
+        // Save our activityUser
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +106,20 @@ class ActivityUserController extends Controller
      * @Route("/{id}", name="activityuser_show")
      * @Method("GET")
      */
-    public function showAction(ActivityUser $activityUser)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($activityUser);
-
-        return $this->render('activityuser/show.html.twig', array(
-            'activityUser' => $activityUser,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $activityUser = $this->getDoctrine()
+        ->getRepository('ApiBundle:ActivityUser')
+        ->findOneBy(['id' => $id]);
+    
+        if ($activityUser === null) {
+            return new JsonResponse("activityUser not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $activityUser = $serializer->serialize($activityUser, 'json');
+    
+      $response =  new Response($activityUser, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +128,69 @@ class ActivityUserController extends Controller
      * @Route("/{id}/edit", name="activityuser_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, ActivityUser $activityUser)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($activityUser);
-        $editForm = $this->createForm('ApiBundle\Form\ActivityUserType', $activityUser);
-        $editForm->handleRequest($request);
+        
+        $activityUser = $this->getDoctrine()
+        ->getRepository('ApiBundle:ActivityUser')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('activityuser_edit', array('id' => $activityUser->getId()));
-        }
+        //now we want to deserialize data request to activityUser object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\ActivityUser', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $activityUser->setEditAuth($entity->getEditAuth());
+        $activityUser->setCreateAuth($entity->getCreateAuth()); 
+        $activityUser->setDeleteAuth($entity->getDeleteAuth());
+        $activityUser->setDateSubmit($entity->getDateSubmit());
+        $activityUser->setStatus($entity->getStatus());
+        $activityUser->setZoneInfluence($entity->getZoneInfluence());
+        $activityUser->setMobility($entity->getMobility());
+        $activityUser->setPos($this->getDoctrine()
+        ->getRepository('ApiBundle:Pos')
+        ->findOneBy(['id' => $activityUser->getPos()->getId()]));
 
-        return $this->render('activityuser/edit.html.twig', array(
-            'activityUser' => $activityUser,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $activityUser->setTown($this->getDoctrine()
+        ->getRepository('ApiBundle:Town')
+        ->findOneBy(['id' => $activityUser->getTown()->getId()]));
+
+        $activityUser->setQuarter($this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $activityUser->getQuarter()->getId()]));
+
+        $activityUser->setSector($this->getDoctrine()
+        ->getRepository('ApiBundle:Sector')
+        ->findOneBy(['id' => $activityUser->getSector()->getId()]));
+
+        $activityUser->setRegion($this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $activityUser->getRegion()->getId()]));
+
+        $activityUser->setCountry($this->getDoctrine()
+        ->getRepository('ApiBundle:Country')
+        ->findOneBy(['id' => $activityUser->getCountry()->getId()]));
+
+        $activityUser->setRole($this->getDoctrine()
+        ->getRepository('ApiBundle:Role')
+        ->findOneBy(['id' => $activityUser->getRole()->getId()]));
+
+        $activityUser->setUser($this->getDoctrine()
+        ->getRepository('ApiBundle:User')
+        ->findOneBy(['id' => $activityUser->getUser()->getId()]));
+
+        $activityUser->setActivity($this->getDoctrine()
+        ->getRepository('ApiBundle:Activity')
+        ->findOneBy(['id' => $activityUser->getActivity()->getId()]));
+        
+        // Save our activityUser
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
+ 
+
     }
 
     /**
@@ -104,19 +199,21 @@ class ActivityUserController extends Controller
      * @Route("/{id}", name="activityuser_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, ActivityUser $activityUser)
+    public function deleteAction(Request $request, $id)
     {
-        $form = $this->createDeleteForm($activityUser);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($activityUser);
-            $em->flush($activityUser);
-        }
-
-        return $this->redirectToRoute('activityuser_index');
-    }
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $activityUser = $this->getDoctrine()->getRepository('ApiBundle:ActivityUser')->find($id);
+      if (empty($activityUser)) {
+        $response =  new JsonResponse('activityUser not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($activityUser);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;     }
 
     /**
      * Creates a form to delete a activityUser entity.

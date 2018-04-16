@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Quarter;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Quarter controller.
@@ -23,12 +28,14 @@ class QuarterController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $quarters = $em->getRepository('ApiBundle:Quarter')->findAll();
-
-        return $this->render('quarter/index.html.twig', array(
-            'quarters' => $quarters,
-        ));
+        
+                $quarters = $em->getRepository('ApiBundle:Quarter')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $quarters = $serializer->serialize($quarters, 'json');
+        
+                $response =  new Response($quarters, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,25 @@ class QuarterController extends Controller
      */
     public function newAction(Request $request)
     {
-        $quarter = new Quarter();
-        $form = $this->createForm('ApiBundle\Form\QuarterType', $quarter);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($quarter);
-            $em->flush($quarter);
-
-            return $this->redirectToRoute('quarter_show', array('id' => $quarter->getId()));
-        }
-
-        return $this->render('quarter/new.html.twig', array(
-            'quarter' => $quarter,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $Quarter = $serializer->deserialize($data,'ApiBundle\Entity\Quarter', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $Quarter->setSector($this->getDoctrine()
+        ->getRepository('ApiBundle:Sector')
+        ->findOneBy(['id' => $Quarter->getSector()->getId()]));
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($Quarter);
+    
+        // Save our country
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +73,20 @@ class QuarterController extends Controller
      * @Route("/{id}", name="quarter_show")
      * @Method("GET")
      */
-    public function showAction(Quarter $quarter)
+    public function showAction( $id)
     {
-        $deleteForm = $this->createDeleteForm($quarter);
-
-        return $this->render('quarter/show.html.twig', array(
-            'quarter' => $quarter,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $Quarter = $this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $id]);
+    
+        if ($Quarter === null) {
+            return new JsonResponse("Quarter not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $Quarter = $serializer->serialize($Quarter, 'json');
+    
+      $response =  new Response($Quarter, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +95,31 @@ class QuarterController extends Controller
      * @Route("/{id}/edit", name="quarter_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, Quarter $quarter)
+    public function editAction(Request $request,$id)
     {
-        $deleteForm = $this->createDeleteForm($quarter);
-        $editForm = $this->createForm('ApiBundle\Form\QuarterType', $quarter);
-        $editForm->handleRequest($request);
+        $Quarter = $this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('quarter_edit', array('id' => $quarter->getId()));
-        }
+        //now we want to deserialize data request to Quarter object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Quarter', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $Quarter->setName($entity->getName());
+        $Quarter->setDescription($entity->getDescription()); 
+        $Quarter->setStatus($entity->getStatus());
+        $Quarter->setSector($this->getDoctrine()
+        ->getRepository('ApiBundle:Sector')
+        ->findOneBy(['id' => $entity->getSector()->getId()]));
+        
+        // Save our Quarter
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
 
-        return $this->render('quarter/edit.html.twig', array(
-            'quarter' => $quarter,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
     }
 
     /**
@@ -104,33 +128,24 @@ class QuarterController extends Controller
      * @Route("/{id}", name="quarter_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, Quarter $quarter)
+    public function deleteAction(Request $request, $id)
     {
-        $form = $this->createDeleteForm($quarter);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($quarter);
-            $em->flush($quarter);
-        }
-
-        return $this->redirectToRoute('quarter_index');
+        
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $Quarter = $this->getDoctrine()->getRepository('ApiBundle:Quarter')->find($id);
+      if (empty($Quarter)) {
+        $response =  new JsonResponse('Quarter not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($Quarter);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a quarter entity.
-     *
-     * @param Quarter $quarter The quarter entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Quarter $quarter)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('quarter_delete', array('id' => $quarter->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
+
+    
 }

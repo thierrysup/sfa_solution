@@ -55,6 +55,7 @@ class Country
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="country",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     * @MaxDepth(1)
      */
     private $activityUsers;
 
@@ -63,6 +64,7 @@ class Country
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Region", mappedBy="country",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Region>")
+     * @MaxDepth(1)
      */
     private $regions;
 

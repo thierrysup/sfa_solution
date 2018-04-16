@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\POS;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Po controller.
@@ -23,12 +28,14 @@ class POSController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $pOSs = $em->getRepository('ApiBundle:POS')->findAll();
-
-        return $this->render('pos/index.html.twig', array(
-            'pOSs' => $pOSs,
-        ));
+        
+                $pos = $em->getRepository('ApiBundle:POS')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $pos = $serializer->serialize($pos, 'json');
+        
+                $response =  new Response($pos, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,25 @@ class POSController extends Controller
      */
     public function newAction(Request $request)
     {
-        $pO = new Po();
-        $form = $this->createForm('ApiBundle\Form\POSType', $pO);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($pO);
-            $em->flush($pO);
-
-            return $this->redirectToRoute('pos_show', array('id' => $pO->getId()));
-        }
-
-        return $this->render('pos/new.html.twig', array(
-            'pO' => $pO,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $pos = $serializer->deserialize($data,'ApiBundle\Entity\POS', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $pos->setQuarter($this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $pos->getQuarter()->getId()]));
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($pos);
+    
+        // Save our country
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +73,20 @@ class POSController extends Controller
      * @Route("/{id}", name="pos_show")
      * @Method("GET")
      */
-    public function showAction(POS $pO)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($pO);
-
-        return $this->render('pos/show.html.twig', array(
-            'pO' => $pO,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $pos = $this->getDoctrine()
+        ->getRepository('ApiBundle:POS')
+        ->findOneBy(['id' => $id]);
+    
+        if ($pos === null) {
+            return new JsonResponse("pos not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $pos = $serializer->serialize($pos, 'json');
+    
+      $response =  new Response($pos, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +95,33 @@ class POSController extends Controller
      * @Route("/{id}/edit", name="pos_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, POS $pO)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($pO);
-        $editForm = $this->createForm('ApiBundle\Form\POSType', $pO);
-        $editForm->handleRequest($request);
+        $pos = $this->getDoctrine()
+        ->getRepository('ApiBundle:POS')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('pos_edit', array('id' => $pO->getId()));
-        }
+        //now we want to deserialize data request to pos object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\POS', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $pos->setName($entity->getName());
+        $pos->setAdresse($entity->getAdresse());
+        $pos->setPhone($entity->getPhone()); 
+        $pos->setDescription($entity->getDescription());  
+        $pos->setStatus($entity->getStatus());
+        $pos->setQuarter($this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $entity->getQuarter()->getId()]));
+        
+        // Save our pos
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
 
-        return $this->render('pos/edit.html.twig', array(
-            'pO' => $pO,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
     }
 
     /**
@@ -104,33 +130,21 @@ class POSController extends Controller
      * @Route("/{id}", name="pos_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, POS $pO)
+    public function deleteAction(Request $request, $id)
     {
-        $form = $this->createDeleteForm($pO);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($pO);
-            $em->flush($pO);
-        }
-
-        return $this->redirectToRoute('pos_index');
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $pos = $this->getDoctrine()->getRepository('ApiBundle:POS')->find($id);
+      if (empty($pos)) {
+        $response =  new JsonResponse('pos not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($pos);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a pO entity.
-     *
-     * @param POS $pO The pO entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(POS $pO)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('pos_delete', array('id' => $pO->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }

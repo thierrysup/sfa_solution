@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Product;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Product controller.
@@ -23,12 +28,14 @@ class ProductController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $products = $em->getRepository('ApiBundle:Product')->findAll();
-
-        return $this->render('product/index.html.twig', array(
-            'products' => $products,
-        ));
+        
+                $product = $em->getRepository('ApiBundle:Product')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $product = $serializer->serialize($product, 'json');
+        
+                $response =  new Response($product, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,25 @@ class ProductController extends Controller
      */
     public function newAction(Request $request)
     {
-        $product = new Product();
-        $form = $this->createForm('ApiBundle\Form\ProductType', $product);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($product);
-            $em->flush($product);
-
-            return $this->redirectToRoute('product_show', array('id' => $product->getId()));
-        }
-
-        return $this->render('product/new.html.twig', array(
-            'product' => $product,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $product = $serializer->deserialize($data,'ApiBundle\Entity\Product', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $product->setActivity($this->getDoctrine()
+        ->getRepository('ApiBundle:Activity')
+        ->findOneBy(['id' => $product->getActivity()->getId()]));
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($product);
+    
+        // Save our product
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -65,12 +75,18 @@ class ProductController extends Controller
      */
     public function showAction(Product $product)
     {
-        $deleteForm = $this->createDeleteForm($product);
-
-        return $this->render('product/show.html.twig', array(
-            'product' => $product,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $product = $this->getDoctrine()
+        ->getRepository('ApiBundle:Product')
+        ->findOneBy(['id' => $id]);
+    
+        if ($product === null) {
+            return new JsonResponse("product not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $product = $serializer->serialize($product, 'json');
+    
+      $response =  new Response($product, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +95,37 @@ class ProductController extends Controller
      * @Route("/{id}/edit", name="product_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, Product $product)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($product);
-        $editForm = $this->createForm('ApiBundle\Form\ProductType', $product);
-        $editForm->handleRequest($request);
+    
+        $product = $this->getDoctrine()
+        ->getRepository('ApiBundle:Product')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('product_edit', array('id' => $product->getId()));
-        }
+        //now we want to deserialize data request to product object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Product', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $product->setName($entity->getName());
+        $product->setGroupable($entity->getGroupable()); 
+        $product->setQuantity($entity->getQuantity());
+        $product->setFreeUse($entity->getFreeUse());
+        $product->setStatus($entity->getStatus());
+        $product->setDateCreate($entity->getDateCreate());
+        $product->setActivity($this->getDoctrine()
+        ->getRepository('ApiBundle:Activity')
+        ->findOneBy(['id' => $entity->getActivity()->getId()]));
 
-        return $this->render('product/edit.html.twig', array(
-            'product' => $product,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+
+        // Save our product
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
+
+
     }
 
     /**
@@ -104,33 +134,21 @@ class ProductController extends Controller
      * @Route("/{id}", name="product_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, Product $product)
+    public function deleteAction(Request $request, $id)
     {
-        $form = $this->createDeleteForm($product);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($product);
-            $em->flush($product);
-        }
-
-        return $this->redirectToRoute('product_index');
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $product = $this->getDoctrine()->getRepository('ApiBundle:Product')->find($id);
+      if (empty($product)) {
+        $response =  new JsonResponse('product not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($product);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;    
     }
 
-    /**
-     * Creates a form to delete a product entity.
-     *
-     * @param Product $product The product entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Product $product)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('product_delete', array('id' => $product->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }

@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Survey;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Survey controller.
@@ -23,12 +28,14 @@ class SurveyController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $surveys = $em->getRepository('ApiBundle:Survey')->findAll();
-
-        return $this->render('survey/index.html.twig', array(
-            'surveys' => $surveys,
-        ));
+        
+                $survey = $em->getRepository('ApiBundle:Survey')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $survey = $serializer->serialize($survey, 'json');
+        
+                $response =  new Response($survey, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
@@ -39,22 +46,28 @@ class SurveyController extends Controller
      */
     public function newAction(Request $request)
     {
-        $survey = new Survey();
-        $form = $this->createForm('ApiBundle\Form\SurveyType', $survey);
-        $form->handleRequest($request);
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $Survey = $serializer->deserialize($data,'ApiBundle\Entity\Survey', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $survey->setQuarter($this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $entity->getQuarter()->getId()]));
+        $survey->setPos($this->getDoctrine()
+        ->getRepository('ApiBundle:POS')
+        ->findOneBy(['id' => $entity->getPos()->getId()]));
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($survey);
-            $em->flush($survey);
-
-            return $this->redirectToRoute('survey_show', array('id' => $survey->getId()));
-        }
-
-        return $this->render('survey/new.html.twig', array(
-            'survey' => $survey,
-            'form' => $form->createView(),
-        ));
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($Survey);
+    
+        // Save our Survey
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +76,20 @@ class SurveyController extends Controller
      * @Route("/{id}", name="survey_show")
      * @Method("GET")
      */
-    public function showAction(Survey $survey)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($survey);
-
-        return $this->render('survey/show.html.twig', array(
-            'survey' => $survey,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $survey = $this->getDoctrine()
+        ->getRepository('ApiBundle:Survey')
+        ->findOneBy(['id' => $id]);
+    
+        if ($survey === null) {
+            return new JsonResponse("survey not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $survey = $serializer->serialize($survey, 'json');
+    
+      $response =  new Response($survey, Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -79,23 +98,41 @@ class SurveyController extends Controller
      * @Route("/{id}/edit", name="survey_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, Survey $survey)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($survey);
-        $editForm = $this->createForm('ApiBundle\Form\SurveyType', $survey);
-        $editForm->handleRequest($request);
+        
+        $survey = $this->getDoctrine()
+        ->getRepository('ApiBundle:Survey')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('survey_edit', array('id' => $survey->getId()));
-        }
+        //now we want to deserialize data request to survey object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Survey', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $survey->setDateSubmit($entity->getDateSubmit());
+        $survey->setCommit($entity->getCommit()); 
+        $survey->setActorName($entity->getActorName());
+        $survey->setActorPhone($entity->getActorPhone());
+        $survey->setStatus($entity->getStatus());
+        $survey->setLattitude($entity->getLattitude());
+        $survey->setLongitude($entity->getLongitude());
+        $survey->setQuarter($this->getDoctrine()
+        ->getRepository('ApiBundle:Quarter')
+        ->findOneBy(['id' => $entity->getQuarter()->getId()]));
+        $survey->setPos($this->getDoctrine()
+        ->getRepository('ApiBundle:POS')
+        ->findOneBy(['id' => $entity->getPos()->getId()]));
 
-        return $this->render('survey/edit.html.twig', array(
-            'survey' => $survey,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+
+        // Save our survey
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
+
+
     }
 
     /**
@@ -106,31 +143,20 @@ class SurveyController extends Controller
      */
     public function deleteAction(Request $request, Survey $survey)
     {
-        $form = $this->createDeleteForm($survey);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($survey);
-            $em->flush($survey);
-        }
-
-        return $this->redirectToRoute('survey_index');
+        
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $survey = $this->getDoctrine()->getRepository('ApiBundle:Survey')->find($id);
+      if (empty($survey)) {
+        $response =  new JsonResponse('survey not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($survey);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a survey entity.
-     *
-     * @param Survey $survey The survey entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Survey $survey)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('survey_delete', array('id' => $survey->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }
