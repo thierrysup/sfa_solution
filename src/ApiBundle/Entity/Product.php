@@ -70,7 +70,7 @@ class Product
      * @var \DateTime
      *
      * @ORM\Column(name="date_create", type="date")
-     * @Type("date")
+     * @jms\Serializer\Annotation\Type("DateTime<'Y-m-d'>")
      */
     private $dateCreate;
 

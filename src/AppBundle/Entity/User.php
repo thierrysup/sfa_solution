@@ -33,7 +33,7 @@ class User extends BaseUser
      * 1 client
      * 2 employ
      *
-     * @ORM\Column(name="type_user", type="integer")
+     * @ORM\Column(name="type_user", type="integer",nullable=true)
      * @Type("int")
      */
     protected $type_user;
@@ -45,24 +45,6 @@ class User extends BaseUser
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
      */
     protected $activityUsers;
-
-     /**
-     * Many Users have Many Users.
-     * @ORM\ManyToMany(targetEntity="AppBundle\Entity\User", mappedBy="mySupervisors")
-     * @Type("ArrayCollection<AppBundle\Entity\User>")
-     */
-    private $supervisesWithMe;
-
-    /**
-     * Many Users have many Users.
-     * @ORM\ManyToMany(targetEntity="AppBundle\Entity\User", inversedBy="supervisesWithMe")
-     * @ORM\JoinTable(name="managers",
-     *      joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="supervisor_user_id", referencedColumnName="id")}
-     *      )
-     * @Type("ArrayCollection<AppBundle\Entity\User>")
-     */
-    private $mySupervisors;
 
     /**
      * Get id
@@ -87,7 +69,7 @@ class User extends BaseUser
 
         return $this;
     }
-
+ 
     /**
      * Get typeUser
      *
@@ -97,7 +79,7 @@ class User extends BaseUser
     {
         return $this->type_user;
     }
-
+ 
     /**
      * Add activityUser
      *
@@ -130,73 +112,5 @@ class User extends BaseUser
     public function getActivityUsers()
     {
         return $this->activityUsers;
-    }
-
-    /**
-     * Add supervisesWithMe
-     *
-     * @param \AppBundle\Entity\User $supervisesWithMe
-     *
-     * @return User
-     */
-    public function addSupervisesWithMe(\AppBundle\Entity\User $supervisesWithMe)
-    {
-        $this->supervisesWithMe[] = $supervisesWithMe;
-
-        return $this;
-    }
-
-    /**
-     * Remove supervisesWithMe
-     *
-     * @param \AppBundle\Entity\User $supervisesWithMe
-     */
-    public function removeSupervisesWithMe(\AppBundle\Entity\User $supervisesWithMe)
-    {
-        $this->supervisesWithMe->removeElement($supervisesWithMe);
-    }
-
-    /**
-     * Get supervisesWithMe
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getSupervisesWithMe()
-    {
-        return $this->supervisesWithMe;
-    }
-
-    /**
-     * Add mySupervisor
-     *
-     * @param \AppBundle\Entity\User $mySupervisor
-     *
-     * @return User
-     */
-    public function addMySupervisor(\AppBundle\Entity\User $mySupervisor)
-    {
-        $this->mySupervisors[] = $mySupervisor;
-
-        return $this;
-    }
-
-    /**
-     * Remove mySupervisor
-     *
-     * @param \AppBundle\Entity\User $mySupervisor
-     */
-    public function removeMySupervisor(\AppBundle\Entity\User $mySupervisor)
-    {
-        $this->mySupervisors->removeElement($mySupervisor);
-    }
-
-    /**
-     * Get mySupervisors
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getMySupervisors()
-    {
-        return $this->mySupervisors;
     }
 }

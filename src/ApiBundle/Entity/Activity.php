@@ -38,7 +38,7 @@ class Activity
      * @var \DateTime
      *
      * @ORM\Column(name="start_date", type="date")
-     * @@Type("date")
+     * @jms\Serializer\Annotation\Type("DateTime<'Y-m-d'>")
      */
     private $startDate;
 
@@ -46,7 +46,7 @@ class Activity
      * @var \DateTime
      *
      * @ORM\Column(name="end_date", type="date")
-     * @Type("date")
+     * @jms\Serializer\Annotation\Type("DateTime<'Y-m-d'>")
      */
     private $endDate;
 

@@ -55,6 +55,7 @@ class Region
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Target", mappedBy="product",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Target>")
+     * @MaxDepth(1)
      */
     private $targets;
 
@@ -63,6 +64,7 @@ class Region
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="region",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     * @MaxDepth(1)
      */
     private $activityUsers;
 
@@ -71,6 +73,7 @@ class Region
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Town", mappedBy="region",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Town>")
+     * @MaxDepth(1)
      */
     private $towns;
 

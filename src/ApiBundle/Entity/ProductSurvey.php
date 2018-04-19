@@ -35,10 +35,18 @@ class ProductSurvey
     private $quantity;
 
     /**
+     * @var bool
+     *
+     * @ORM\Column(name="baseline", type="boolean")
+     * @Type("boolean")
+     */
+    private $baseline;
+
+    /**
      * @var \DateTime
      *
      * @ORM\Column(name="date_submit", type="date")
-     * @Type("date")
+     * @jms\Serializer\Annotation\Type("DateTime<'Y-m-d'>")
      */
     private $dateSubmit;
 

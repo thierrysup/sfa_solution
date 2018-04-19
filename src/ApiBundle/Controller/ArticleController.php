@@ -15,10 +15,27 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Article controller.
  *
- * @Route("api/article")
+ * @Route("article")
  */
 class ArticleController extends Controller
 {
+
+    /**
+     * Deletes a activity entity.
+     *
+     * @Route("/hello", name="activity_test")
+     * @Method({"GET"})
+     */
+    public function tutuAction()
+    {
+        $logic_service = $this->get('logic_services');
+        // Get the Doctrine service and manager
+     
+      $response =  new JsonResponse($logic_service->submitSurvey(), Response::HTTP_OK);
+      return $response;
+    
+    }
+
     /**
      * Lists all article entities.
      *

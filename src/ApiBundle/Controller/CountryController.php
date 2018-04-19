@@ -5,12 +5,16 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Country;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
+use JMS\Serializer\SerializerBuilder;
 /**
  * Country controller.
  *
- * @Route("country")
+ * @Route("/country")
  */
 class CountryController extends Controller
 {
@@ -26,9 +30,11 @@ class CountryController extends Controller
 
         $countries = $em->getRepository('ApiBundle:Country')->findAll();
 
-        return $this->render('country/index.html.twig', array(
-            'countries' => $countries,
-        ));
+        $serializer = SerializerBuilder::create()->build();
+        $countries = $serializer->serialize($countries, 'json');
+
+        $response =  new Response($countries, Response::HTTP_OK);        
+        return $response;
     }
 
     /**
@@ -39,22 +45,22 @@ class CountryController extends Controller
      */
     public function newAction(Request $request)
     {
-        $country = new Country();
-        $form = $this->createForm('ApiBundle\Form\CountryType', $country);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($country);
-            $em->flush($country);
-
-            return $this->redirectToRoute('country_show', array('id' => $country->getId()));
-        }
-
-        return $this->render('country/new.html.twig', array(
-            'country' => $country,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $country = $serializer->deserialize($data,'ApiBundle\Entity\Country', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($country);
+    
+        // Save our country
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,14 +69,22 @@ class CountryController extends Controller
      * @Route("/{id}", name="country_show")
      * @Method("GET")
      */
-    public function showAction(Country $country)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($country);
 
-        return $this->render('country/show.html.twig', array(
-            'country' => $country,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $country = $this->getDoctrine()
+        ->getRepository('ApiBundle:Country')
+        ->findOneBy(['id' => $id]);
+    
+        if ($country === null) {
+            return new JsonResponse("country not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $country = $serializer->serialize($country, 'json');
+    
+      $response =  new Response($country, Response::HTTP_OK);     
+
+      return $response;
     }
 
     /**
@@ -79,23 +93,28 @@ class CountryController extends Controller
      * @Route("/{id}/edit", name="country_edit")
      * @Method({"GET", "POST"})
      */
-    public function editAction(Request $request, Country $country)
-    {
-        $deleteForm = $this->createDeleteForm($country);
-        $editForm = $this->createForm('ApiBundle\Form\CountryType', $country);
-        $editForm->handleRequest($request);
+    public function editAction(Request $request, $id)
+    {   
+        $country = $this->getDoctrine()
+        ->getRepository('ApiBundle:Country')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('country_edit', array('id' => $country->getId()));
-        }
-
-        return $this->render('country/edit.html.twig', array(
-            'country' => $country,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+        //now we want to deserialize data request to country object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Country', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $country->setName($entity->getName());
+        $country->setDescription($entity->getDescription()); 
+        $country->setStatus($entity->getStatus());
+        
+        // Save our country
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
+      return $response;
     }
 
     /**
@@ -104,33 +123,22 @@ class CountryController extends Controller
      * @Route("/{id}", name="country_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, Country $country)
-    {
-        $form = $this->createDeleteForm($country);
-        $form->handleRequest($request);
+    public function deleteAction(Request $request, $id)
+    {   
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($country);
-            $em->flush($country);
-        }
-
-        return $this->redirectToRoute('country_index');
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $country = $this->getDoctrine()->getRepository('ApiBundle:Country')->find($id);
+      if (empty($country)) {
+        $response =  new JsonResponse('country not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($country);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a country entity.
-     *
-     * @param Country $country The country entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Country $country)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('country_delete', array('id' => $country->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }

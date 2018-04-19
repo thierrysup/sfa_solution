@@ -81,7 +81,7 @@ class Quarter
      * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Sector", inversedBy="quarters",cascade={"persist"})
      * @ORM\JoinColumn(name="sector_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
      * @Type("ApiBundle\Entity\Sector")
-     * @MaxDepth(1)
+     * @MaxDepth(0)
      */
     private $sector;
 

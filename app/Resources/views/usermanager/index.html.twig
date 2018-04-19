@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Usermanagers list</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for userManager in userManagers %}
+            <tr>
+                <td><a href="{{ path('usermanager_show', { 'id': userManager.id }) }}">{{ userManager.id }}</a></td>
+                <td>{% if userManager.status %}Yes{% else %}No{% endif %}</td>
+                <td>
+                    <ul>
+                        <li>
+                            <a href="{{ path('usermanager_show', { 'id': userManager.id }) }}">show</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('usermanager_edit', { 'id': userManager.id }) }}">edit</a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('usermanager_new') }}">Create a new userManager</a>
+        </li>
+    </ul>
+{% endblock %}

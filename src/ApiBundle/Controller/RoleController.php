@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Role;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Role controller.
@@ -23,38 +28,39 @@ class RoleController extends Controller
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-
-        $roles = $em->getRepository('ApiBundle:Role')->findAll();
-
-        return $this->render('role/index.html.twig', array(
-            'roles' => $roles,
-        ));
+        
+                $role = $em->getRepository('ApiBundle:Role')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $role = $serializer->serialize($role, 'json');
+        
+                $response =  new Response($role, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
      * Creates a new role entity.
      *
      * @Route("/new", name="role_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
-        $role = new Role();
-        $form = $this->createForm('ApiBundle\Form\RoleType', $role);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($role);
-            $em->flush($role);
-
-            return $this->redirectToRoute('role_show', array('id' => $role->getId()));
-        }
-
-        return $this->render('role/new.html.twig', array(
-            'role' => $role,
-            'form' => $form->createView(),
-        ));
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $role = $serializer->deserialize($data,'ApiBundle\Entity\Role', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($role);
+    
+        // Save our role
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
     }
 
     /**
@@ -63,39 +69,54 @@ class RoleController extends Controller
      * @Route("/{id}", name="role_show")
      * @Method("GET")
      */
-    public function showAction(Role $role)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($role);
+        
+        $role = $this->getDoctrine()
+        ->getRepository('ApiBundle:Role')
+        ->findOneBy(['id' => $id]);
+    
+        if ($role === null) {
+            return new JsonResponse("role not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $role = $serializer->serialize($role, 'json');
+    
+      $response =  new Response($role, Response::HTTP_OK);
+      return $response;   
 
-        return $this->render('role/show.html.twig', array(
-            'role' => $role,
-            'delete_form' => $deleteForm->createView(),
-        ));
     }
 
     /**
      * Displays a form to edit an existing role entity.
      *
      * @Route("/{id}/edit", name="role_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
-    public function editAction(Request $request, Role $role)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($role);
-        $editForm = $this->createForm('ApiBundle\Form\RoleType', $role);
-        $editForm->handleRequest($request);
+        
+        $role = $this->getDoctrine()
+        ->getRepository('ApiBundle:Role')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('role_edit', array('id' => $role->getId()));
-        }
+        //now we want to deserialize data request to role object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Role', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $role->setName($entity->getName());
+        $role->setStatus($entity->getStatus()); 
+        $role->setPriority($entity->getPriority());
+        
+        // Save our role
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
 
-        return $this->render('role/edit.html.twig', array(
-            'role' => $role,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+
     }
 
     /**
@@ -104,33 +125,23 @@ class RoleController extends Controller
      * @Route("/{id}", name="role_delete")
      * @Method("DELETE")
      */
-    public function deleteAction(Request $request, Role $role)
+    public function deleteAction(Request $request, $id)
     {
-        $form = $this->createDeleteForm($role);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($role);
-            $em->flush($role);
-        }
-
-        return $this->redirectToRoute('role_index');
+        
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $role = $this->getDoctrine()->getRepository('ApiBundle:Role')->find($id);
+      if (empty($role)) {
+        $response =  new JsonResponse('role not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($role);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
+    
     }
 
-    /**
-     * Creates a form to delete a role entity.
-     *
-     * @param Role $role The role entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Role $role)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('role_delete', array('id' => $role->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }

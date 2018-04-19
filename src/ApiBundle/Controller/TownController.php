@@ -5,7 +5,12 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Town;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+use JMS\Serializer\SerializerBuilder;
 
 /**
  * Town controller.
@@ -22,39 +27,46 @@ class TownController extends Controller
      */
     public function indexAction()
     {
-        $em = $this->getDoctrine()->getManager();
-
-        $towns = $em->getRepository('ApiBundle:Town')->findAll();
-
-        return $this->render('town/index.html.twig', array(
-            'towns' => $towns,
-        ));
+         $em = $this->getDoctrine()->getManager();
+        
+                $towns = $em->getRepository('ApiBundle:Town')->findAll();
+        
+                $serializer = SerializerBuilder::create()->build();
+                $towns = $serializer->serialize($towns, 'json');
+        
+                $response =  new Response($towns, Response::HTTP_OK);        
+                return $response;
     }
 
     /**
      * Creates a new town entity.
      *
      * @Route("/new", name="town_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
-        $town = new Town();
-        $form = $this->createForm('ApiBundle\Form\TownType', $town);
-        $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($town);
-            $em->flush($town);
+        $data = $request->getContent();
+        
+        $serializer = SerializerBuilder::create()->build();
+        $town = $serializer->deserialize($data,'ApiBundle\Entity\Town', 'json');
+        
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        $town->setRegion($this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $town->getRegion()->getId()]));
+    
+        // Add our quote to Doctrine so that it can be saved
+        $em->persist($town);
+    
+        // Save our country
+        $em->flush();
+     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     
+     return $response;
 
-            return $this->redirectToRoute('town_show', array('id' => $town->getId()));
-        }
-
-        return $this->render('town/new.html.twig', array(
-            'town' => $town,
-            'form' => $form->createView(),
-        ));
     }
 
     /**
@@ -63,39 +75,54 @@ class TownController extends Controller
      * @Route("/{id}", name="town_show")
      * @Method("GET")
      */
-    public function showAction(Town $town)
+    public function showAction($id)
     {
-        $deleteForm = $this->createDeleteForm($town);
-
-        return $this->render('town/show.html.twig', array(
-            'town' => $town,
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $town = $this->getDoctrine()
+        ->getRepository('ApiBundle:Town')
+        ->findOneBy(['id' => $id]);
+    
+        if ($town === null) {
+            return new JsonResponse("town not found", Response::HTTP_NOT_FOUND);
+        }
+        $serializer = SerializerBuilder::create()->build();
+        $town = $serializer->serialize($town, 'json');
+    
+      $response =  new Response($town, Response::HTTP_OK);
+      return $response;
     }
 
     /**
      * Displays a form to edit an existing town entity.
      *
      * @Route("/{id}/edit", name="town_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
-    public function editAction(Request $request, Town $town)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($town);
-        $editForm = $this->createForm('ApiBundle\Form\TownType', $town);
-        $editForm->handleRequest($request);
+        
+        $town = $this->getDoctrine()
+        ->getRepository('ApiBundle:Town')
+        ->findOneBy(['id' => $id]); 
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        $data = $request->getContent();
 
-            return $this->redirectToRoute('town_edit', array('id' => $town->getId()));
-        }
-
-        return $this->render('town/edit.html.twig', array(
-            'town' => $town,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+        //now we want to deserialize data request to town object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Town', 'json');
+        // Get the Doctrine service and manager
+        $em = $this->getDoctrine()->getManager();
+        
+        $town->setName($entity->getName());
+        $town->setDescription($entity->getDescription()); 
+        $town->setStatus($entity->getStatus());
+        $town->setTown($this->getDoctrine()
+        ->getRepository('ApiBundle:Town')
+        ->findOneBy(['id' => $entity->getTown()->getId()]));
+        
+        // Save our town
+         $em->flush();
+      $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
+         
     }
 
     /**
@@ -106,31 +133,19 @@ class TownController extends Controller
      */
     public function deleteAction(Request $request, Town $town)
     {
-        $form = $this->createDeleteForm($town);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($town);
-            $em->flush($town);
-        }
-
-        return $this->redirectToRoute('town_index');
+        // Get the Doctrine service and manager
+      $em = $this->getDoctrine()->getManager();
+      $town = $this->getDoctrine()->getRepository('ApiBundle:Town')->find($id);
+      if (empty($town)) {
+        $response =  new JsonResponse('town not found', Response::HTTP_NOT_FOUND);
+        return $response;
+       }
+       else {
+        $em->remove($town);
+        $em->flush();
+       }
+      $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
+      return $response;
     }
 
-    /**
-     * Creates a form to delete a town entity.
-     *
-     * @param Town $town The town entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Town $town)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('town_delete', array('id' => $town->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
 }
