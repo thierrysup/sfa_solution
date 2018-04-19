@@ -38,7 +38,7 @@ class Activity
      * @var \DateTime
      *
      * @ORM\Column(name="start_date", type="date")
-     * @@Type("date")
+     * @Type("date")
      */
     private $startDate;
 

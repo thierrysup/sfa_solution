@@ -2,6 +2,7 @@
 
 namespace ApiBundle\Controller;
 
+
 use ApiBundle\Entity\ProductSurvey;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
@@ -9,6 +10,19 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use ApiBundle\Entity\Region;
+use ApiBundle\Entity\Activity;
+use ApiBundle\Entity\Country;
+use ApiBundle\Entity\Entreprise;
+use ApiBundle\Entity\POS;
+use ApiBundle\Entity\Product;
+//use ApiBundle\Entity\ProductSurvey;
+use ApiBundle\Entity\Quarter;
+use ApiBundle\Entity\Role;
+use ApiBundle\Entity\Sector;
+use ApiBundle\Entity\Survey;
+use ApiBundle\Entity\Target;
+use ApiBundle\Entity\Town;
 
 use JMS\Serializer\SerializerBuilder;
 
@@ -37,6 +51,22 @@ class ProductSurveyController extends Controller
                 $response =  new Response($productSurvey, Response::HTTP_OK);        
                 return $response;
     }
+
+    /**
+     * resultat requette raport journalier.
+     *
+     * @Route("/result/{id}", name="result_journalier")
+     * @Method({"GET"})
+     */
+/*      public function rapportAction( $id)
+     {
+        $service = $this->get('service_requette');
+            
+    
+
+             return new JsonResponse($service->first($id));
+     } */
+
 
     /**
      * Creates a new productSurvey entity.
@@ -88,10 +118,38 @@ class ProductSurveyController extends Controller
         if ($productSurvey === null) {
             return new JsonResponse("productSurvey not found", Response::HTTP_NOT_FOUND);
         }
+        $date_debut = new \Date();
+        $date_fin = new \Date();
+        $result = 'SELECT SUM(ps.quantity) AS qteRealiser,
+        t.quantity
+       FROM Product_survey ps, survey su, product p, target t,
+       quarter q, town v, sector s, region r, product_survey au
+       WHERE 
+           AND CAST( su.date_submit AS DATE) < :start_date  
+           AND CAST( su.date_submit AS DATE) > :end_date  
+           AND su.date_submit < :start_date
+           AND su.date_submit > :end_date
+           AND ps.survey_id = su.id
+           AND q.id = su.quarter_id
+           AND q.sector_id = s.id
+           AND s.town_id = v.id
+           AND v.region_id = r.id
+           AND t.region_id = v.region_id
+           AND su.user_id = au.user_id
+           AND au.activity_id = p.activity_id
+       GROUP BY r.id, p.id,  
+       ';
+       $em = $this->getDoctrine()->getManager();
+       $result = $em->getConnection()->prepare($result);
+       $result->bindValue('start_date', $date_debut);
+       $result->bindValue('end_date', $date_fin);
+       $result->execute();
+       $result = $result->fetchAll();
+
         $serializer = SerializerBuilder::create()->build();
         $productSurvey = $serializer->serialize($productSurvey, 'json');
     
-      $response =  new Response($productSurvey, Response::HTTP_OK);
+      $response =  new Response($result, Response::HTTP_OK);
       return $response;
     }
 

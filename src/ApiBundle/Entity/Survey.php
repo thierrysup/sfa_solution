@@ -2,6 +2,7 @@
 
 namespace ApiBundle\Entity;
 
+use AppBundle\Entity\User;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
@@ -100,6 +101,16 @@ class Survey
      * @MaxDepth(1)
      */
     private $quarter;
+
+    /**
+     * @var User The user this survey is about.
+     *
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\User",cascade={"persist"})
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @Type("AppBundle\Entity\User")
+     * @MaxDepth(1)
+     */
+     private $user;
 
     /**
      * @var POS The pos this pos is about.

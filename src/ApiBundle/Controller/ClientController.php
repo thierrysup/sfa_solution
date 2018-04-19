@@ -16,7 +16,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Client controller.
  *
- * @Route("api/client")
+ * @Route("client")
  */
 class ClientController extends Controller
 {

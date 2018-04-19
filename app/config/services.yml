@@ -3,7 +3,11 @@
 parameters:
 #    parameter_name: value
 
-services:
-#    service_name:
-#        class: AppBundle\Directory\ClassName
+#services:
+#    service_requette:
+#        class: ApiBundle\Service\ServiceGlobal
 #        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
+
+
+#  ApiBundle\:
+#    resource: '../src/Service/*'

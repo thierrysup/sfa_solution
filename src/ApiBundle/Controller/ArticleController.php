@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Article controller.
  *
- * @Route("api/article")
+ * @Route("/article")
  */
 class ArticleController extends Controller
 {
