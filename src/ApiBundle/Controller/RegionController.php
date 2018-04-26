@@ -42,7 +42,7 @@ class RegionController extends Controller
      * Creates a new region entity.
      *
      * @Route("/new", name="region_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -94,7 +94,7 @@ class RegionController extends Controller
      * Displays a form to edit an existing region entity.
      *
      * @Route("/{id}/edit", name="region_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {

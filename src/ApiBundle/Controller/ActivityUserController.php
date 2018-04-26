@@ -42,7 +42,7 @@ class ActivityUserController extends Controller
      * Creates a new activityUser entity.
      *
      * @Route("/new", name="activityuser_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -82,7 +82,7 @@ class ActivityUserController extends Controller
         ->findOneBy(['id' => $activityUser->getRole()->getId()]));
 
         $activityUser->setUser($this->getDoctrine()
-        ->getRepository('ApiBundle:User')
+        ->getRepository('AppBundle:User')
         ->findOneBy(['id' => $activityUser->getUser()->getId()]));
 
         $activityUser->setActivity($this->getDoctrine()
@@ -126,7 +126,7 @@ class ActivityUserController extends Controller
      * Displays a form to edit an existing activityUser entity.
      *
      * @Route("/{id}/edit", name="activityuser_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {
@@ -179,7 +179,7 @@ class ActivityUserController extends Controller
         ->findOneBy(['id' => $activityUser->getRole()->getId()]));
 
         $activityUser->setUser($this->getDoctrine()
-        ->getRepository('ApiBundle:User')
+        ->getRepository('AppBundle:User')
         ->findOneBy(['id' => $activityUser->getUser()->getId()]));
 
         $activityUser->setActivity($this->getDoctrine()

@@ -42,7 +42,7 @@ class ProductController extends Controller
      * Creates a new product entity.
      *
      * @Route("/new", name="product_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -93,7 +93,7 @@ class ProductController extends Controller
      * Displays a form to edit an existing product entity.
      *
      * @Route("/{id}/edit", name="product_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {

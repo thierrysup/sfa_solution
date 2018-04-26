@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+
 use JMS\Serializer\SerializerBuilder;
 
 /**
@@ -31,18 +32,17 @@ class ActivityController extends Controller
         
                 $activity = $em->getRepository('ApiBundle:Activity')->findAll();
         
-                $serializer = SerializerBuilder::create()->build();
-                $activity = $serializer->serialize($activity, 'json');
-        
-                $response =  new Response($activity, Response::HTTP_OK);        
-                return $response;
+                $data =  $this->get('jms_serializer')->serialize($activity, 'json');
+
+                $response =  new Response($data, Response::HTTP_OK);
+        return $response;
     }
 
     /**
      * Creates a new activity entity.
      *
      * @Route("/new", name="activity_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -95,7 +95,7 @@ class ActivityController extends Controller
      * Displays a form to edit an existing activity entity.
      *
      * @Route("/{id}/edit", name="activity_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {
@@ -135,7 +135,7 @@ class ActivityController extends Controller
      */
     public function deleteAction(Request $request, $id)
     {
-        
+        // $logic_service = $this->get('logic_services');
         // Get the Doctrine service and manager
       $em = $this->getDoctrine()->getManager();
       $activity = $this->getDoctrine()->getRepository('ApiBundle:Activity')->find($id);
@@ -151,5 +151,8 @@ class ActivityController extends Controller
       return $response;
     
     }
+
+
+     
 
 }

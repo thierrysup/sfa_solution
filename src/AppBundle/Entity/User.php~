@@ -33,7 +33,7 @@ class User extends BaseUser
      * 1 client
      * 2 employ
      *
-     * @ORM\Column(name="type_user", type="integer")
+     * @ORM\Column(name="type_user", type="integer",nullable=true)
      * @Type("int")
      */
     protected $type_user;
@@ -46,24 +46,6 @@ class User extends BaseUser
      */
     protected $activityUsers;
 
-     /**
-     * Many Users have Many Users.
-     * @ORM\ManyToMany(targetEntity="AppBundle\Entity\User", mappedBy="mySupervisors")
-     * @Type("ArrayCollection<AppBundle\Entity\User>")
-     */
-    private $supervisesWithMe;
-
-    /**
-     * Many Users have many Users.
-     * @ORM\ManyToMany(targetEntity="AppBundle\Entity\User", inversedBy="supervisesWithMe")
-     * @ORM\JoinTable(name="managers",
-     *      joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="supervisor_user_id", referencedColumnName="id")}
-     *      )
-     * @Type("ArrayCollection<AppBundle\Entity\User>")
-     */
-    private $mySupervisors;
-
     /**
      * Get id
      *
@@ -72,5 +54,63 @@ class User extends BaseUser
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * Set typeUser
+     *
+     * @param integer $typeUser
+     *
+     * @return User
+     */
+    public function setTypeUser($typeUser)
+    {
+        $this->type_user = $typeUser;
+
+        return $this;
+    }
+ 
+    /**
+     * Get typeUser
+     *
+     * @return integer
+     */
+    public function getTypeUser()
+    {
+        return $this->type_user;
+    }
+ 
+    /**
+     * Add activityUser
+     *
+     * @param \ApiBundle\Entity\ActivityUser $activityUser
+     *
+     * @return User
+     */
+    public function addActivityUser(\ApiBundle\Entity\ActivityUser $activityUser)
+    {
+        $this->activityUsers[] = $activityUser;
+
+        return $this;
+    }
+
+    /**
+     * Remove activityUser
+     *
+     * @param \ApiBundle\Entity\ActivityUser $activityUser
+     */
+    public function removeActivityUser(\ApiBundle\Entity\ActivityUser $activityUser)
+    {
+        $this->activityUsers->removeElement($activityUser);
+    }
+
+    /**
+     * Get activityUsers
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getActivityUsers()
+    {
+        return $this->activityUsers;
     }
 }

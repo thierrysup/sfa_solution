@@ -89,7 +89,7 @@ class ClientController extends Controller
 
     
         if ($client === null) {
-            return new JsonReponse("client not found", Response::HTTP_NOT_FOUND);
+            return new JsonResponse("client not found", Response::HTTP_NOT_FOUND);
         }
         $serializer = SerializerBuilder::create()->build();
         $client = $serializer->serialize($client, 'json');

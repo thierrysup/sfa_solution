@@ -42,7 +42,7 @@ class TownController extends Controller
      * Creates a new town entity.
      *
      * @Route("/new", name="town_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -95,7 +95,7 @@ class TownController extends Controller
      * Displays a form to edit an existing town entity.
      *
      * @Route("/{id}/edit", name="town_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {

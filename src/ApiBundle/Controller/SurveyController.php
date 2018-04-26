@@ -42,7 +42,7 @@ class SurveyController extends Controller
      * Creates a new survey entity.
      *
      * @Route("/new", name="survey_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {

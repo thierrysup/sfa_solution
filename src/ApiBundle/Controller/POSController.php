@@ -42,7 +42,7 @@ class POSController extends Controller
      * Creates a new pO entity.
      *
      * @Route("/new", name="pos_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -93,7 +93,7 @@ class POSController extends Controller
      * Displays a form to edit an existing pO entity.
      *
      * @Route("/{id}/edit", name="pos_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {

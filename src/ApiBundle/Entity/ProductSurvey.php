@@ -35,17 +35,25 @@ class ProductSurvey
     private $quantity;
 
     /**
+     * @var bool
+     *
+     * @ORM\Column(name="baseline", type="boolean")
+     * @Type("boolean")
+     */
+    private $baseline;
+
+    /**
      * @var \DateTime
      *
      * @ORM\Column(name="date_submit", type="date")
-     * @Type("date")
+     * @jms\Serializer\Annotation\Type("DateTime<'Y-m-d'>")
      */
     private $dateSubmit;
 
     /**
      * @var int
      *
-     * @ORM\Column(name="quantityIn", type="integer")
+     * @ORM\Column(name="quantityIn", type="integer", nullable=true)
      * @Type("int")
      */
     private $quantityIn;
@@ -78,6 +86,10 @@ class ProductSurvey
      * @MaxDepth(1)
      */
     private $survey;
+
+    public function __toString() {
+        return $this->getId();
+    }
 
     /**
      * Get id

@@ -66,6 +66,7 @@ swiftmailer:
     username:  "%mailer_user%"
     password:  "%mailer_password%"
     spool:     { type: memory }
+
 # FosUser Configuration
 fos_user:
     db_driver: orm # other valid values are 'mongodb', 'couchdb' and 'propel'
@@ -84,9 +85,9 @@ lexik_jwt_authentication:
 nelmio_cors:
         defaults:
             allow_credentials: false
-            allow_origin: []
-            allow_headers: []
-            allow_methods: []
+            allow_origin: ['http://localhost:4200']
+            allow_headers: ["content-type", "authorization"]
+            allow_methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS"]
             expose_headers: []
             max_age: 0
             hosts: []
@@ -96,4 +97,4 @@ nelmio_cors:
                 allow_origin: ['*']
                 allow_headers: ['*']
                 allow_methods: ['POST', 'PUT', 'GET', 'DELETE','OPTIONS','HEAD']
-                max_age: 3600 
+                max_age: 3600

@@ -42,7 +42,7 @@ class RoleController extends Controller
      * Creates a new role entity.
      *
      * @Route("/new", name="role_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -91,7 +91,7 @@ class RoleController extends Controller
      * Displays a form to edit an existing role entity.
      *
      * @Route("/{id}/edit", name="role_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {

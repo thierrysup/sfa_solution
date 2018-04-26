@@ -42,7 +42,7 @@ class QuarterController extends Controller
      * Creates a new quarter entity.
      *
      * @Route("/new", name="quarter_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -93,7 +93,7 @@ class QuarterController extends Controller
      * Displays a form to edit an existing quarter entity.
      *
      * @Route("/{id}/edit", name="quarter_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request,$id)
     {

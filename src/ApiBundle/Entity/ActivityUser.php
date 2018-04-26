@@ -54,7 +54,7 @@ class ActivityUser
      * @var \DateTime
      *
      * @ORM\Column(name="date_submit", type="date")
-     * @Type("date")
+     * @jms\Serializer\Annotation\Type("DateTime<'Y-m-d'>")
      */
     private $dateSubmit;
 

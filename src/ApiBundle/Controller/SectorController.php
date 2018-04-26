@@ -42,7 +42,7 @@ class SectorController extends Controller
      * Creates a new sector entity.
      *
      * @Route("/new", name="sector_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -93,7 +93,7 @@ class SectorController extends Controller
      * Displays a form to edit an existing sector entity.
      *
      * @Route("/{id}/edit", name="sector_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {
