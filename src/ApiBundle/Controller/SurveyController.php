@@ -61,11 +61,11 @@ class SurveyController extends Controller
         ->findOneBy(['id' => $entity->getPos()->getId()]));
 
         // Add our quote to Doctrine so that it can be saved
-        $em->persist($Survey);
+        $em->persist($survey);
     
         // Save our Survey
         $em->flush();
-     $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);
+     $response =  new JsonResponse($survey, Response::HTTP_OK);
      
      return $response;
     }

@@ -32,11 +32,20 @@ class User extends BaseUser
      *
      * 1 client
      * 2 employ
-     *
+     * 3 admin
      * @ORM\Column(name="type_user", type="integer",nullable=true)
      * @Type("int")
      */
     protected $type_user;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="phone", type="string",nullable=true)
+     * @Type("string")
+     */
+    protected $phone;
+
 
     /**
      * @var ActivityUser[] Available ActivityUsers for this user.
