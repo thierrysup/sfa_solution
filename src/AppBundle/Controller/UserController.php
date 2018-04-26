@@ -27,6 +27,12 @@ class UserController extends Controller
      */
     public function indexAction()
     {
+
+        $user = $this->get('security.context')->getToken()->getUser();
+        if (!is_object($user)) {
+            return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
+        }
+
         $em = $this->getDoctrine()->getManager();
         
         $user = $em->getRepository('AppBundle:User')->findAll();
@@ -34,8 +40,7 @@ class UserController extends Controller
         $serializer = SerializerBuilder::create()->build();
         $user = $serializer->serialize($user, 'json');
         
-        $response =  new Response($user, Response::HTTP_OK);
-        return $response;
+        return new Response($user, Response::HTTP_OK);
     }
 
 
@@ -46,7 +51,7 @@ class UserController extends Controller
      * @Method({"POST"})
      * @return Response
      */
-    public function newAction(Request $request)
+    /* public function newAction(Request $request)
     {
 
             $userManager = $this->get('fos_user.user_manager');
@@ -78,7 +83,72 @@ class UserController extends Controller
             $response->setData("User: ".$user->getUsername()." had been saved");
             return $response;
 
+        } */
+
+
+
+
+
+        /**
+     * Creates a new user entity.
+     *
+     * @Route("/new", name="user_new")
+     * @Method({"POST"})
+     * @return Response
+     */
+    public function newAction(Request $request)
+    {
+
+        $user = $this->get('security.context')->getToken()->getUser();
+        if (!is_object($user)) {
+            return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
         }
+
+        $data = $request->getContent();
+
+        //now we want to deserialize data request to article object ...
+        $serializer = SerializerBuilder::create()->build();
+        $entity = $serializer->deserialize($data,'AppBundle\Entity\User', 'json');
+
+
+            $user = new User();
+            $user->setUsername($entity->getUsername());
+            $user->setLogin($entity->getLogin());
+            $user->setEmail($entity->getEmail());
+            $user->setPassword($entity->getPassword());
+            $user->setPlainPassword($entity->getPlainPassword());
+            $user->setTypeUser($entity->getTypeUser());
+            if ($entity->getTypeUser() === 3) {
+                $user->addRole("ROLE_ADMIN");
+            }
+            $user->setPhone($entity->getPhone());
+            $user->setEnabled(true);
+            $this->get('fos_user.user_manager')->updateUser($user);
+
+            //$em->persist($entity);
+           // $em->flush();
+
+            return new JsonResponse("created new user id".$user->getId(), Response::HTTP_OK);;
+
+        }
+
+        /**
+         * Finds and displays a user entity.
+         *
+         * @Route("/session", name="user_session_show")
+         * @Method({"GET"})
+         */
+        public function sessionUserAction()
+        {
+
+            $user = $this->get('security.context')->getToken()->getUser();
+            if (!is_object($user)) {
+                return new JsonResponse('go to login ...', Response::HTTP_NOT_FOUND);
+            }
+
+            return new Response($user, Response::HTTP_OK);
+        }
+
 
         /**
          * Finds and displays a user entity.
@@ -88,12 +158,14 @@ class UserController extends Controller
          */
         public function showAction($id)
         {
-            $user = $this->getDoctrine()
-            ->getRepository('AppBundle:User')
-            ->findOneBy(['id' => $id]);
 
-
+            $user = $this->get('security.context')->getToken()->getUser();
+            if (!is_object($user)) {
+                return new JsonResponse('go to login ...', Response::HTTP_NOT_FOUND);
+            }
         
+            $user = $this->getDoctrine()->getRepository('AppBundle:User')->findOneBy(['id' => $id]);
+
             if ($user === null) {
                 return new JsonResponse("user not found", Response::HTTP_NOT_FOUND);
             }
@@ -101,7 +173,6 @@ class UserController extends Controller
             $user = $serializer->serialize($user, 'json');
         
         $response =  new Response($user, Response::HTTP_OK);
-        
 
         return $response;
     }
@@ -110,25 +181,52 @@ class UserController extends Controller
      * Displays a form to edit an existing user entity.
      *
      * @Route("/{id}/edit", name="user_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
-    public function editAction(Request $request, User $user)
+    public function editAction(Request $request, $id)
     {
-        $deleteForm = $this->createDeleteForm($user);
-        $editForm = $this->createForm('AppBundle\Form\UserType', $user);
-        $editForm->handleRequest($request);
 
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
-
-            return $this->redirectToRoute('user_edit', array('id' => $user->getId()));
+        if (!$this->get('security.context')->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse('Administrator page !!!',Response::HTTP_OK);
+          }
+        $user = $this->get('security.context')->getToken()->getUser();
+        if (!is_object($user)) {
+            return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
         }
 
-        return $this->render('user/edit.html.twig', array(
-            'user' => $user,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
+        $data = $request->getContent();
+
+        //now we want to deserialize data request to activity object ...
+        $serializer = SerializerBuilder::create()->build();
+        $newEntity = $serializer->deserialize($data,'AppBundle\Entity\User', 'json');
+
+        $em = $this->getDoctrine()->getManager();
+
+        $entity = $em->getRepository('AppBundle:User')->find($id);
+        $userManager = $this->get('fos_user.user_manager');
+
+        if (!$entity) {
+            return new JsonResponse('any user with this id ...', Response::HTTP_NOT_FOUND);
+        }
+            $user =  $this->userManager->findUserByUsername($entity->getUsername());
+
+            $user->setUsername($newEntity->getUsername());
+            $user->setEmail($newEntity->getEmail());
+            $user->setPassword($newEntity->getPassword());
+            $user->setPlainPassword($newEntity->getPlainPassword());
+            $user->setPhone($newEntity->getPhone());
+            $user->setTypeUser($newEntity->getTypeUser());
+            if ($newEntity->getTypeUser() != $entity->getTypeUser()) {
+                if ($newEntity->getTypeUser() === 3) {
+                    $user->addRole("ROLE_ADMIN");
+                }else {
+                    $user->addRole("ROLE_USER");
+                }
+            }
+            $this->userManager->updateUser($user);
+
+            $em->flush();
+        return null;
     }
 
     /**
@@ -139,6 +237,10 @@ class UserController extends Controller
      */
     public function deleteAction(Request $request, User $id)
     {
+       /*  if (!$this->get('security.context')->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse('Administrator page !!!',Response::HTTP_OK);
+          }
+ */
       $em = $this->getDoctrine()->getManager();
       $user = $this->getDoctrine()->getRepository('AppBundle:User')->find($id);
       if (empty($user)) {
