@@ -100,6 +100,10 @@ class Product
      */
     private $productsurveys;
 
+    public function __toString() {
+        return $this->getName();
+    }
+
 
     /**
      * Get id

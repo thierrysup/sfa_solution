@@ -4,9 +4,12 @@ parameters:
 #    parameter_name: value
 
 services:
-#    service_name:
-#        class: AppBundle\Directory\ClassName
-#        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
-     logic_services:
-         class: ApiBundle\Service\LogicService
-         arguments: [ "@doctrine.orm.entity_manager" ]
+    service_requette:
+        class: ApiBundle\Service\ServiceGlobal
+        arguments: [ "@doctrine.orm.entity_manager" ]
+   # ApiBundle\:
+    #    resource: '../src/Service/*'
+
+    logic_services:
+        class: ApiBundle\Service\LogicService
+        arguments: [ "@doctrine.orm.entity_manager" ]

@@ -2,6 +2,7 @@
 
 namespace ApiBundle\Controller;
 
+
 use ApiBundle\Entity\ProductSurvey;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
@@ -9,6 +10,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+
 
 use JMS\Serializer\SerializerBuilder;
 
@@ -34,9 +36,10 @@ class ProductSurveyController extends Controller
                 $serializer = SerializerBuilder::create()->build();
                 $productSurvey = $serializer->serialize($productSurvey, 'json');
         
-                $response =  new Response($productSurvey, Response::HTTP_OK);        
+                $response =  new JsonResponse($productSurvey, Response::HTTP_OK);        
                 return $response;
     }
+
 
     /**
      * Creates a new productSurvey entity.
@@ -81,18 +84,19 @@ class ProductSurveyController extends Controller
      */
     public function showAction($id)
     {
-        $productSurvey = $this->getDoctrine()
+         $productSurvey = $this->getDoctrine()
         ->getRepository('ApiBundle:ProductSurvey')
-        ->findOneBy(['id' => $id]);
+        ->findOneBy(['id' => $id]); 
     
         if ($productSurvey === null) {
             return new JsonResponse("productSurvey not found", Response::HTTP_NOT_FOUND);
         }
+       
         $serializer = SerializerBuilder::create()->build();
         $productSurvey = $serializer->serialize($productSurvey, 'json');
     
-      $response =  new Response($productSurvey, Response::HTTP_OK);
-      return $response;
+        $response =  new Response($productSurvey, Response::HTTP_OK);
+        return $response;
     }
 
     /**

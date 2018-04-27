@@ -41,7 +41,7 @@ class LogicService {
     }
     public function findSubordinateByManagerId($id){
         $MANAGER_QUERY = 'SELECT u.username username,a.name act_name,r.name role_name
-            FROM user_manager um ,activity a,user u,user_activity ua,role r
+            FROM user_manager um ,activity a,user u,activity_user ua,role r
             WHERE (um.manager_id = :id 
               AND um.subordinate_id = u.id 
               AND um.activity_id = a.id 
@@ -49,7 +49,7 @@ class LogicService {
               AND ua.user_id = u.id
               AND ua.role_id = r.id
               AND um.status = 1
-              AND u.status = 1
+              AND u.enabled = 1
               AND a.status = 1
               AND r.status = 1
               AND ua.status = 1)
@@ -72,19 +72,19 @@ class LogicService {
     }
 
     public function findSubordinateByUserIdAndActivityId($id,$idAct){
-        $MANAGER_QUERY = 'SELECT u.username username,a.name act_name,a.id activity_id,r.name role_name
-            FROM user_manager um ,activity a,user u,user_activity ua,role r
+        $MANAGER_QUERY = 'SELECT u.username username,a.name act_name,a.id activity_id
+            FROM user_manager um ,activity a,user u,activity_user ua
             WHERE (um.manager_id = :id 
               AND um.subordinate_id = u.id 
               AND um.activity_id = a.id 
               AND ua.activity_id = a.id
               AND ua.user_id = u.id
-              AND ua.role_id = r.id
+        
               AND a.id = :idAct
               AND um.status = 1
-              AND u.status = 1
+              AND u.enabled = 1
               AND a.status = 1
-              AND r.status = 1
+           
               AND ua.status = 1)
             GROUP BY a.id';
         $results = $this->em->getConnection()->prepare($MANAGER_QUERY);
@@ -99,8 +99,7 @@ class LogicService {
             $dataSend[] = array(
                 'subordinate'=>$result['username'],
                 'activity' =>$result['act_name'],
-                'activity_id' =>$result['activity_id'],
-                'role'=>$result['role_name']
+                'activity_id' =>$result['activity_id']
             ); 
         }
         return $dataSend;
@@ -108,14 +107,14 @@ class LogicService {
     
     public function findGeneralUsersManage(){
         $MANAGER_QUERY = 'SELECT u.username username,a.id activity_id,(SELECT user.username FROM user WHERE user.enable = 1 AND um.manager_id = user.id) manager_name,a.name act_name,r.name role_name
-            FROM user_manager um ,activity a,user u,user_activity ua,role r
+            FROM user_manager um ,activity a,user u,activity_user ua,role r
             WHERE (um.subordinate_id = u.id 
               AND um.activity_id = a.id 
               AND ua.activity_id = a.id
               AND ua.user_id = u.id
               AND ua.role_id = r.id
               AND um.status = 1
-              AND u.status = 1
+              AND u.enabled = 1
               AND a.status = 1
               AND r.status = 1
               AND ua.status = 1)
@@ -149,12 +148,12 @@ class LogicService {
                        ELSE ua.country_id
                        END AS zone_influence_id)
 
-            FROM activity a,user u,user_activity ua,role r
+            FROM activity a,user u,activity_user ua,role r
             WHERE (u.id = :id
               AND ua.activity_id = a.id
               AND ua.user_id = u.id
               AND ua.role_id = r.id
-              AND u.status = 1
+              AND u.enabled = 1
               AND a.status = 1
               AND r.status = 1
               AND ua.status = 1)';
@@ -181,6 +180,35 @@ class LogicService {
         return $dataSend;
     }
 
-    
+    public function findResourceOTerrainByActivity($idAct){
+        $MANAGER_QUERYS = 'SELECT DISTINCT(u.id) , u.username 
+        FROM user_manager um ,activity a,user u,activity_user ua
+        WHERE ua.user_id = u.id
+          AND ua.activity_id = :idAct
+          AND ua.mobility = 1
+          AND um.activity_id = ua.activity_id
+          AND u.id IN (SELECT user.id 
+                                        FROM  user 
+                                        WHERE  user.id  IN (SELECT Um.subordinate_id idu FROM user_manager Um WHERE Um.activity_id = :idAct )
+                                )
+          AND u.id NOT IN (SELECT user.id 
+                                        FROM  user 
+                                        WHERE  user.id  IN (SELECT Um.manager_id idu FROM user_manager Um WHERE Um.activity_id = :idAct )
+                                )
+          AND a.id = :idAct         
+          AND u.enabled = 1
+          AND a.status = 1
+          AND ua.status = 1
+          AND um.status = 1
+
+          
+        ';
+    $results = $this->em->getConnection()->prepare($MANAGER_QUERYS);
+        $results->bindValue('idAct', $idAct);
+        $results->execute();
+    $results = $results->fetchAll();
+
+    return $results;
+    }
 
 }

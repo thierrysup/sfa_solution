@@ -37,16 +37,16 @@ class Activity
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="start_date", type="date")
-     * @@Type("date")
+     * @ORM\Column(name="start_date", type="datetime")
+     * @Type("DateTime")
      */
     private $startDate;
 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="end_date", type="date")
-     * @Type("date")
+     * @ORM\Column(name="end_date", type="datetime")
+     * @Type("DateTime")
      */
     private $endDate;
 

@@ -53,7 +53,7 @@ class ProductSurvey
     /**
      * @var int
      *
-     * @ORM\Column(name="quantityIn", type="integer")
+     * @ORM\Column(name="quantityIn", type="integer", nullable=true)
      * @Type("int")
      */
     private $quantityIn;
@@ -86,6 +86,10 @@ class ProductSurvey
      * @MaxDepth(1)
      */
     private $survey;
+
+    public function __toString() {
+        return $this->getId();
+    }
 
     /**
      * Get id

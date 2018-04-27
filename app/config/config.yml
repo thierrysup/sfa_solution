@@ -32,7 +32,6 @@ framework:
     fragments:       ~
     http_method_override: true
     assets: ~
-
 # Twig Configuration
 twig:
     debug:            "%kernel.debug%"
@@ -80,7 +79,7 @@ fos_user:
 lexik_jwt_authentication:
     private_key_path: '%kernel.root_dir%/../var/jwt/private.pem'
     public_key_path:  '%kernel.root_dir%/../var/jwt/public.pem'
-    pass_phrase:      enspm_iconprod
+    pass_phrase:      themeM2
     token_ttl:        3600
 
 nelmio_cors:
