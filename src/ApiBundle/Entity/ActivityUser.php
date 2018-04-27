@@ -97,7 +97,7 @@ class ActivityUser
      * @var POS The pos this activityUser is about.
      *
      * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\POS", inversedBy="activityUsers",cascade={"persist"})
-     * @ORM\JoinColumn(name="pod_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @ORM\JoinColumn(name="pos_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
      * @Type("ApiBundle\Entity\POS")
      * @MaxDepth(1)
      */
