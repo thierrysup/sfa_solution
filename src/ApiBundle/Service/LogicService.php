@@ -179,7 +179,7 @@ class LogicService {
         }
         return $dataSend;
     }
-
+//liste ba sur une activité
     public function findResourceOTerrainByActivity($idAct){
         $MANAGER_QUERYS = 'SELECT DISTINCT(u.id) , u.username 
         FROM user_manager um ,activity a,user u,activity_user ua
