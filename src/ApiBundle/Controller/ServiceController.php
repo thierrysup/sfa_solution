@@ -23,7 +23,8 @@ class ServiceController extends Controller
      */
      public function rapportAction( )
      {
-        $service = $this->get('service_requette');
+       // $service = $this->get('service_requette');
+        $service = $this->get('logic_services');
         $user = 1;
         $act = 1;
        //  $debut = new dateTime();
@@ -31,12 +32,14 @@ class ServiceController extends Controller
         $debut = '2018-04-15';
         $fin = '2018-04-20';
      
-     
+     //   return new JsonResponse($service->findResourceOByActivity($act));
+        
+        return new JsonResponse($service->findSubordinateByUserIdAndActivityId($user,$act));
     // return new JsonResponse($service->rapportPeriodeService($user,$act,$debut,$fin));
      
      // return new JsonResponse($service->rapportUserPerfornanceService($user,$act));
    //  return new JsonResponse($service->rapportUserPerfornanceJourService($user,$act,$debut,$fin));
-   return new JsonResponse($service->rapportUserPerfornancePeriodeService($user,$act,$debut,$fin));
+ //  return new JsonResponse($service->rapportUserPerfornancePeriodeService($user,$act,$debut,$fin));
          
   //return new JsonResponse($service->rapportPeriodeResourceService($debut,$fin));
   
