@@ -48,12 +48,11 @@ class ServiceGlobal
     
     }
 
-// details de realisation d'une ressource pendant une période et dans une activitées.    
+// details de realisation d'une ressource pendant une période et dans une activitées.
     public function rapportPeriodeService($idUser,$idAct,$debut,$fin){
 
         $rapportUser = 'SELECT product.activity_id, tab1.date_submit ,survey.actor_name ,
        product.name AS product_name ,SUM(tab1.quantity) AS summRea,SUM(tab1.quantity_target) AS summObj,
-                                            
        ((SUM(tab1.quantity)/SUM(tab1.quantity_target))*100) AS pourcentage
        FROM survey, product,(SELECT target.product_id AS product_id,product_survey.id AS product_survey_id,product_survey.quantity AS quantity, target.quantity AS quantity_target, product_survey.date_submit AS date_submit,product_survey.survey_id
                                                 FROM target ,product_survey/*,survey*/
@@ -115,7 +114,33 @@ class ServiceGlobal
               return $rapportUser;
             }
 
+            // performance d'une ressouce dans une activité
+            public function rapportUserPerfornanceService($idUser,$idAct){
+                    
+                $rapportUser = 'SELECT product.activity_id ,survey.actor_name ,
+            product.name AS product_name ,SUM(tab1.quantity) AS summRea,SUM(tab1.quantity_target) AS summObj,
+                                                    
+            ((SUM(tab1.quantity)/SUM(tab1.quantity_target))*100) AS pourcentage
+            FROM survey, product,(SELECT target.product_id AS product_id,product_survey.id AS product_survey_id,product_survey.quantity AS quantity, target.quantity AS quantity_target, product_survey.date_submit AS date_submit,product_survey.survey_id
+                                                        FROM target ,product_survey
+                                                        WHERE product_survey.product_id=target.product_id
+                                                        
+                                                        AND target.start_date <= product_survey.date_submit
+                                                        AND target.end_date >= product_survey.date_submit
+                                                        AND product_survey.quantityIn IS NULL) AS tab1
 
+                WHERE (survey.user_id = :idUser
+                AND product.activity_id = :idAct
+                AND survey.id = tab1.survey_id 
+                AND product.id = tab1.product_id)
+            GROUP BY tab1.product_id ' ; 
+            $rapportUser = $this->em->getConnection()->prepare($rapportUser);
+            $rapportUser->bindValue('idUser', $idUser);
+            $rapportUser->bindValue('idAct', $idAct);
+            $rapportUser->execute();
+            $rapportUser = $rapportUser->fetchAll();
+            return $rapportUser;
+            }
 
 //rapport de type service, de toute les ressources sur un périodes
     public function rapportPeriodeResourceService($debut,$fin){
@@ -139,80 +164,6 @@ class ServiceGlobal
               $rapportUser = $rapportUser->fetchAll();
               return $rapportUser;
             }
-        
-
-        /*     SET `quantite` = (
-        CASE 
-          WHEN `surcharge` < 1 THEN `quantite` + 1
-          WHEN `surcharge` > 1 THEN `quantite` - 1
-          ELSE quantite
-        END
-            ) */
-      
-
-    public function rapportUserPerfornancePeriodeService($idUser,$idAct,$debut,$fin){
-       
-       $rapportUser = 'SELECT product.activity_id, survey.date_submit ,survey.actor_name ,
-       product.name AS product_name ,COUNT(product_survey.quantity) AS summRea,
-       (SELECT
-               SUM( CASE 
-                    WHEN ((target.start_date <= CAST(:debut AS DATE)) 
-                        AND (target.end_date <= CAST(:fin AS DATE))
-                            AND (target.end_date > CAST(:debut AS DATE))) 
-                    THEN target.quantity*DATEDIFF(   (DATE(target.end_date)), (CAST(:debut AS DATE)))
-                    WHEN ((target.start_date > CAST(:debut AS DATE)) 
-                        AND (target.end_date < CAST(:fin AS DATE))) 
-                    THEN target.quantity*DATEDIFF(   (DATE(target.end_date)), (DATE(target.start_date)))
-                    WHEN ((target.start_date > CAST(:debut AS DATE)) 
-                        AND (target.end_date > CAST(:fin AS DATE))) 
-                    THEN target.quantity*DATEDIFF(   (CAST(:fin AS DATE)), (DATE(target.start_date)))
-                    WHEN ((target.start_date < CAST(:debut AS DATE)) 
-                        AND (target.end_date > CAST(:fin AS DATE))) 
-                    THEN target.quantity*DATEDIFF(   (CAST(:fin AS DATE)), (CAST(:debut AS DATE)))
-                END )
-            FROM target ,product AS p
-            WHERE p.id= target.product_id
-            AND p.id = product.id) AS sumTarget ,
-
-            ((COUNT(product_survey.quantity)/(SELECT
-                CASE 
-                    WHEN ((target.start_date < CAST(:debut AS DATE)) 
-                        AND (target.end_date < CAST(:fin AS DATE))
-                            AND (target.end_date > CAST(:debut AS DATE))) 
-                    THEN SUM(target.quantity*DATEDIFF(   (DATE(target.end_date)), (CAST(:debut AS DATE))))
-                    WHEN ((target.start_date > CAST(:debut AS DATE)) 
-                        AND (target.end_date < CAST(:fin AS DATE))) 
-                    THEN SUM(target.quantity*DATEDIFF(   (DATE(target.end_date)), (DATE(target.start_date))))
-                    WHEN ((target.start_date > CAST(:debut AS DATE)) 
-                        AND (target.end_date > CAST(:fin AS DATE))) 
-                    THEN SUM(target.quantity*DATEDIFF(   (CAST(:fin AS DATE)), (DATE(target.start_date))))
-                    WHEN ((target.start_date < CAST(:debut AS DATE)) 
-                        AND (target.end_date > CAST(:fin AS DATE))) 
-                    THEN SUM(target.quantity*DATEDIFF(   (CAST(:fin AS DATE)), (CAST(:debut AS DATE))))
-                END AS sumTarget
-            FROM target ,product AS p
-            WHERE p.id= target.product_id
-            AND p.id = product.id)*100)) AS pourcentage,
-        product_survey.quantityIn
-       FROM survey, product_survey, product 
-        WHERE (survey.user_id = :idUser
-        AND product.activity_id = :idAct
-        AND survey.id = product_survey.survey_id 
-        AND product_survey.product_id = product.id 
-        AND product_survey.date_submit BETWEEN CAST(:debut AS DATE) AND CAST(:fin AS DATE)       
-        AND product_survey.quantityIn IS NULL)
-      
-       ' ;
-      $rapportUser = $this->em->getConnection()->prepare($rapportUser);
-      $rapportUser->bindValue('idUser', $idUser);
-      $rapportUser->bindValue('idAct', $idAct);
-      $rapportUser->bindValue('debut', $debut);
-      $rapportUser->bindValue('fin', $fin);
-      $rapportUser->execute();
-      $rapportUser = $rapportUser->fetchAll();
-      return $rapportUser;
-
-    }
 
 
     public function rapportUserPerfornanceJourService($idUser,$idAct,$debut,$fin){
@@ -246,33 +197,7 @@ class ServiceGlobal
    
     }
 
-    // performance d'une ressouce dans une activité
-    public function rapportUserPerfornanceService($idUser,$idAct){
-        
-        $rapportUser = 'SELECT product.activity_id ,survey.actor_name ,
-       product.name AS product_name ,SUM(tab1.quantity) AS summRea,SUM(tab1.quantity_target) AS summObj,
-                                            
-       ((SUM(tab1.quantity)/SUM(tab1.quantity_target))*100) AS pourcentage
-       FROM survey, product,(SELECT target.product_id AS product_id,product_survey.id AS product_survey_id,product_survey.quantity AS quantity, target.quantity AS quantity_target, product_survey.date_submit AS date_submit,product_survey.survey_id
-                                                FROM target ,product_survey
-                                                WHERE product_survey.product_id=target.product_id
-                                                
-                                                AND target.start_date <= product_survey.date_submit
-                                                AND target.end_date >= product_survey.date_submit
-                                                AND product_survey.quantityIn IS NULL) AS tab1
-
-        WHERE (survey.user_id = :idUser
-        AND product.activity_id = :idAct
-        AND survey.id = tab1.survey_id 
-        AND product.id = tab1.product_id)
-       GROUP BY tab1.product_id ' ; 
-      $rapportUser = $this->em->getConnection()->prepare($rapportUser);
-      $rapportUser->bindValue('idUser', $idUser);
-      $rapportUser->bindValue('idAct', $idAct);
-      $rapportUser->execute();
-      $rapportUser = $rapportUser->fetchAll();
-      return $rapportUser;
-    }
+    
 
  //   (COUNT(*)/SUM(target.quantity))*100 AS pourcentage,
    // SUM(target.quantity) AS summ ,

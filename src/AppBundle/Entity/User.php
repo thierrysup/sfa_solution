@@ -122,4 +122,77 @@ class User extends BaseUser
     {
         return $this->activityUsers;
     }
+
+    public function getRegionId($idAct){
+
+        $idRegion=0;
+        foreach ($this->getActivityUsers() as $activityUser) {
+            if ($activityUser->getActivity()->getId() === $idAct) {
+
+                switch ($activityUser->getZoneInfluence()) {
+                    case 1:
+                        $idRegion = $activityUser->getPOS()->getQuarter()->getSector()->getTown()->getRegion()->getId();
+                        break;
+                    case 2:
+                        $idRegion = $activityUser->getQuarter()->getSector()->getTown()->getRegion()->getId();
+                        break;
+                    case 3:
+                        $idRegion = $activityUser->getSector()->getTown()->getRegion()->getId();
+                        break;
+                    case 4:
+                        $idRegion = $activityUser->getTown()->getRegion()->getId();
+                        break;
+                    case 5:
+                        $idRegion = $activityUser->getRegion()->getId();
+                        break;
+                    default:
+                        $idRegion = -1;                }
+
+            }
+        }
+        return $idRegion;
+    }
+
+    public function getZoneInfluence($idAct){
+        foreach ($this->getActivityUsers() as $activityUser) {
+            if ($activityUser->getActivity()->getId() === $idAct) {
+                return $activityUser->getZoneInfluence();
+            }
+        }
+        return 0;
+
+    }
+
+    public function getListOfIdReferenceAreaByActivityId($idAct){
+
+        $idAreas =[];
+        foreach ($this->getActivityUsers() as $activityUser) {
+            if (($activityUser->getActivity()->getId() === $idAct)) {
+
+                switch ($activityUser->getZoneInfluence()) {
+                    case 3:
+                        $quarters = $activityUser->getSector()->getQuarters();
+                        foreach ($quarters as $quarter) {
+                            $idAreas[] = $quarter->getId();
+                        }
+                        break;
+                    case 4:
+                        $sectors = $activityUser->getTown()->getSectors();
+                        foreach ($sectors as $sector) {
+                            $idAreas[] = $sector->getId();
+                        }
+                        break;
+                    default:  {
+                        $regions = $activityUser->getCountry()->getRegions();
+                        foreach ($regions as $region) {
+                            $idAreas[] =$region->getId();
+                        }
+                    }
+                }
+                return $idAreas;
+            }
+        }
+        return $idAreas;
+    }
+
 }

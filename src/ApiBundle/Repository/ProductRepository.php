@@ -10,4 +10,16 @@ namespace ApiBundle\Repository;
  */
 class ProductRepository extends \Doctrine\ORM\EntityRepository
 {
+    public function findByActivityId($idAct)
+    {
+
+            $qb = $this->createQueryBuilder('a');
+            $qb->where('a.activity = :idAct')
+            ->setParameter('idAct', $idAct)
+            ->andWhere('a.status = :status')
+            ->setParameter('status', true)
+            ->orderBy('a.name', 'DESC');
+            return $qb->getQuery()
+            ->getResult();
+    }
 }
