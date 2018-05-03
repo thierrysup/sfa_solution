@@ -60,7 +60,7 @@ class ServiceController extends Controller
      public function helloAction( )
      {
         $service = $this->get('logic_services');
-         $user = 5;
+         $user = 6;
          $act = 1;
          $product=2;
          $sector = 3;

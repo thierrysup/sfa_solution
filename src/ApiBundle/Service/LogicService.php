@@ -324,7 +324,7 @@ class LogicService {
      */
     public function findSummarySurveyByActivityIdService($idAct){
 
-        $QUERY = 'SELECT DISTINCT target.product_id AS product_id/* ,target.region_id */,SUM(ps.quantity) AS quantity,SUM(target.quantity) AS quantity_target/* , ps.date_submit AS date_submit,su.date_submit date,ps.survey_id */,su.user_id user_id
+        $QUERY = 'SELECT DISTINCT target.product_id AS product_id/* ,target.region_id */,SUM(ps.quantity) AS quantity,SUM(target.quantity) AS quantity_target, ps.date_submit AS date_submit/*,su.date_submit date,ps.survey_id */,su.user_id user_id
                                                     FROM target ,product p,product_survey ps,survey su,quarter q,activity_user au,sector s,town t
                                                     WHERE su.id = ps.survey_id
                                                     AND p.id = ps.product_id
@@ -338,7 +338,7 @@ class LogicService {
                                                     AND au.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
-                                                    AND ps.quantityIn IS NULL GROUP BY product_id,user_id
+                                                    AND ps.quantityIn IS NULL GROUP BY product_id,user_id,ps.date_submit
         ' ; 
         $results = $this->em->getConnection()->prepare($QUERY);
             $results->bindValue('idAct', $idAct);
@@ -430,6 +430,7 @@ class LogicService {
         $results = $this->findDetailsSurveyByActivityIdService($idAct);
 
         $data =[];
+            
         
           foreach ($results as $result) {
             if ($regionId === -1 || $regionId === 0) {
@@ -437,7 +438,9 @@ class LogicService {
                     $data[]= $this->initTableService($result);
                 }
             } else {
-                if (($result['region_id'] === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
+                //var_dump((intval($result['region_id']) === $regionId) && ($user->getZoneInfluence($idAct) === 5));
+                //die();
+                if ((intval($result['region_id']) === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
                     $data[]= $this->initTableService($result);
                 }else {
                     if ($user->getZoneInfluence($idAct) === 4) {
@@ -518,7 +521,7 @@ class LogicService {
                     $data[]= $this->initTableService($result);
                 }
             } else {
-                if (($result['region_id'] === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
+                if ((intval($result['region_id']) === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
                     $data[]= $this->initTableService($result);
                 }else {
                     if ($user->getZoneInfluence($idAct) === 4) {
@@ -561,9 +564,7 @@ class LogicService {
 
           foreach ($results as $result) {
             $userResult[$result['user_id']]=0;
-          } 
-          // var_dump($userResult);
-            //   die();
+          }
 
             foreach (array_keys($userResult) as $user_id) {
 
@@ -571,21 +572,16 @@ class LogicService {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
                 }
-               
 
                 foreach ($results as $result) {
-                   // var_dump(intval($result['user_id'])===$user_id);
-                   // die();
                         if(intval($result['user_id'])===$user_id){
-                            $targetResult[$result['product_id']] += $result['quantity_target'] ;
                             $productResult[$result['product_id']] += $result['quantity'] ;
                             
-                        }
+                            $targetResult[$result['product_id']] += $result['quantity_target'] ;
 
-                        
+                        }
                 }
-                // var_dump($productResult);
-               // die();
+
                 foreach (array_keys($productResult) as $product_id) {
                     $data[] = array('product_id' => $product_id,
                                     'quantity'=>$productResult[$product_id],
@@ -810,7 +806,7 @@ class LogicService {
                     $data[]= $this->initTableProductActivity($result);
                 }
             } else {
-                if (($result['region_id'] === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
+                if ((intval($result['region_id']) === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
                     $data[]= $this->initTableProductActivity($result);
                 }else {
                     if ($user->getZoneInfluence($idAct) === 4) {
