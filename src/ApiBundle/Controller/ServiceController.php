@@ -23,8 +23,8 @@ class ServiceController extends Controller
      */
      public function rapportAction( )
      {
-        $service = $this->get('service_requette');
-        //$service = $this->get('logic_services');
+        //$service = $this->get('service_requette');
+        $service = $this->get('logic_services');
         $user = 1;
         $act = 1;
         $product=2;
@@ -60,7 +60,7 @@ class ServiceController extends Controller
      public function helloAction( )
      {
         $service = $this->get('logic_services');
-         $user = 5;
+         $user = 2;
          $act = 1;
          $product=2;
          $sector = 3;
