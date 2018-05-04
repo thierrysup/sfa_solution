@@ -254,4 +254,8 @@ class UserController extends Controller
       $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
       return $response;
     }
+
+    
+
+
 }

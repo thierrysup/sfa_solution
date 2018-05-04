@@ -428,11 +428,12 @@ class LogicService {
         $user = $this->em->getRepository('AppBundle:User')->find($userId);
         $regionId = $user->getRegionId($idAct);
         $results = $this->findDetailsSurveyByActivityIdService($idAct);
-
+        //var_dump($results);
+        //die();
         $data =[];
             
         
-          foreach ($results as $result) {
+           foreach ($results as $result) {
             if ($regionId === -1 || $regionId === 0) {
                 if (in_array($result['region_id'],$user->getListOfIdReferenceAreaByActivityId($idAct))) {
                     $data[]= $this->initTableService($result);
@@ -457,7 +458,7 @@ class LogicService {
                     
                 }
             }
-        } 
+        }  
         return $data;
     }
 
@@ -511,10 +512,11 @@ class LogicService {
         $regionId = $user->getRegionId($idAct);
         $results = $this->findDetailsSurveyByActivityIdPeriodeService($idAct,$startDate,$endDate);
         
-
+        
         $data =[];
         
           foreach ($results as $result) {
+           
             
             if ($regionId === -1 || $regionId === 0) {
                 if (in_array($result['region_id'],$user->getListOfIdReferenceAreaByActivityId($idAct))) {
@@ -529,8 +531,8 @@ class LogicService {
                             $data[]= $this->initTableService($result);
                         }
                     } else {
-                      //  var_dump(in_array($result['user_id'],$this->getContentIds($idAct,$userId)));
-                       // die();
+                      //  var_dump(in_array($result['quarter_id'],$user->getListOfIdReferenceAreaByActivityId($idAct))&&(in_array($result['user_id'],$this->getContentIds($idAct,$userId))));
+                        //die();
                         if ((in_array($result['quarter_id'],$user->getListOfIdReferenceAreaByActivityId($idAct)))&&(in_array($result['user_id'],$this->getContentIds($idAct,$userId)))) {
                             $data[]= $this->initTableService($result);
                         }
@@ -559,29 +561,42 @@ class LogicService {
         
         $data =[];
         $productResult = array();
+        $dateResult = array();
         $userResult = array();
         $targetResult = array();
 
           foreach ($results as $result) {
             $userResult[$result['user_id']]=0;
-          }
-
+          } 
+           
             foreach (array_keys($userResult) as $user_id) {
 
                 foreach ($results as $result) {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
+                    $dateResult[$result['date_submit']]=0;
                 }
+               
+                 $arr = array();
+                foreach (array_keys($productResult) as $produit_id) {
+                    $arr[$produit_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$produit_id][$date_value] = 0;
+                    }
+                } 
 
                 foreach ($results as $result) {
                         if(intval($result['user_id'])===$user_id){
+
                             $productResult[$result['product_id']] += $result['quantity'] ;
-                            
-                            $targetResult[$result['product_id']] += $result['quantity_target'] ;
 
+                           if($arr[$result['product_id']][$result['date_submit']]===0){
+                                $targetResult[$result['product_id']] += $result['quantity_target'] ;
+                               $arr[$result['product_id']][$result['date_submit']]=1;
+                           }
                         }
-                }
-
+                    }
+                        
                 foreach (array_keys($productResult) as $product_id) {
                     $data[] = array('product_id' => $product_id,
                                     'quantity'=>$productResult[$product_id],
@@ -590,9 +605,91 @@ class LogicService {
                                 );
                 }
             
-            }
+            }   
+
+
         return $data;
     }
+
+    /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    
+    public function filterSurveyByUserAndActivityPeriodeSumGroupByDateService($idAct,$userId,$startDate,$endDate){
+        
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+        $quantityResult = array();
+        $productResult = array();
+        $dateResult = array();
+        $userResult = array();
+        $targetResult = array();
+
+          foreach ($results as $result) {
+            $userResult[$result['user_id']]=0;
+          } 
+           
+            foreach (array_keys($userResult) as $user_id) {
+
+                foreach ($results as $result) {
+                    $productResult[$result['product_id']]=0;
+                    $dateResult[$result['date_submit']]=0;
+                }
+
+                $arr = array();
+                foreach (array_keys($productResult) as $product_id) {
+                    $arr[$product_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$product_id][$date_value] = 0;
+                    }
+                } 
+
+                foreach (array_keys($dateResult) as $date_value) {
+
+                    foreach ($results as $result) {
+                        $quantityResult[$result['product_id']]=0;
+                        $targetResult[$result['product_id']]= 0 ;
+                    }
+                   
+                   
+                    
+                            foreach ($results as $result) {
+                                if((intval($result['user_id'])===$user_id)&&($result['date_submit'] === $date_value) ){
+
+                                    $quantityResult[$result['product_id']] += $result['quantity'] ;
+
+                                if($arr[$result['product_id']][$result['date_submit']]===0){
+                                        $targetResult[$result['product_id']] += $result['quantity_target'] ;
+                                    $arr[$result['product_id']][$result['date_submit']]=1;
+                                }
+                                }
+                            }
+                                
+                        foreach (array_keys($productResult) as $product_id) {
+                            $data[] = array('product_id' => $product_id,
+                                            'quantity'=>$quantityResult[$product_id],
+                                            'date_submit'=>$date_value,
+                                            'quantity_target'=> $targetResult[$product_id],
+                                            'user_id'=> $user_id
+                                        );
+                        }
+                    
+                    }   
+                }
+
+                
+
+            
+        return $data;
+    }
+
 
     public function initTableService($inArray){
         

@@ -23,8 +23,8 @@ class ServiceController extends Controller
      */
      public function rapportAction( )
      {
-        $service = $this->get('service_requette');
-        //$service = $this->get('logic_services');
+        //$service = $this->get('service_requette');
+        $service = $this->get('logic_services');
         $user = 1;
         $act = 1;
         $product=2;
@@ -68,7 +68,7 @@ class ServiceController extends Controller
       //$fin = new DateTime();
          $debut = '2018-04-1';
          $fin = '2018-04-30';
-        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumService($act,$user,$debut,$fin));
+        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumGroupByDateService($act,$user,$debut,$fin));
      } 
 
 }
