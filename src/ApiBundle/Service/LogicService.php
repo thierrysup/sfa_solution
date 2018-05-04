@@ -666,6 +666,15 @@ class LogicService {
     // write product activity logic services ....
 
 
+
+
+
+
+
+
+
+
+
     /**
      * Give all survey who had been pushed and using specific target of this area
      *
@@ -710,14 +719,14 @@ class LogicService {
     }
 
     /**
-     * Give all summary survey whom had been pushed categorize by product and user 
+     * Give all summary survey whom had been pushed categorize by product and user          a ne pas use
      *
      * @param [int] $idAct
      * @return void
      */
     public function findSummarySurveyByActivityIdProductActivity($idAct){
 
-        $QUERY = 'SELECT DISTINCT target.product_id AS product_id/* ,target.region_id */,SUM(ps.quantity) AS quantity,SUM(ps.quantityIn),SUM(target.quantity) AS quantity_target/* , ps.date_submit AS date_submit,su.date_submit date,ps.survey_id */,su.user_id user_id
+        $QUERY = 'SELECT DISTINCT target.product_id AS product_id/* ,target.region_id */,SUM(ps.quantity) AS quantity,SUM(ps.quantityIn) AS quantity_in,SUM(target.quantity) AS quantity_target/* , ps.date_submit AS date_submit,su.date_submit date,ps.survey_id */,su.user_id user_id
                                                     FROM target ,product p,product_survey ps,p_o_s pos,survey su,quarter q,activity_user au,sector s,town t
                                                     WHERE su.id = ps.survey_id
                                                     AND p.id = ps.product_id
@@ -782,7 +791,7 @@ class LogicService {
      * @param [int] $idAct
      * @return void
      */
-    public function findDetailsSurveyByActivityIdByEmployeIdProductActivity($idAct,$userId){
+    public function findDetailsSurveyByActivityIdByEmployeIdProductActivity($idAct){
 
         $QUERY = 'SELECT DISTINCT target.product_id AS product_id,target.region_id ,ps.quantity AS quantity,target.quantity AS quantity_target,ps.quantityIn quantity_in, ps.date_submit AS date_submit,su.date_submit date,ps.survey_id,su.user_id user_id,su.pos_id pos_id
                                                     FROM target ,product p,product_survey ps,survey su,quarter q,p_o_s pos,activity_user au,sector s,town t
@@ -819,7 +828,7 @@ class LogicService {
     public function filterSurveyByUserAndActivityProduct($idAct,$userId){
         $user = $this->em->getRepository('AppBundle:User')->find($userId);
         $regionId = $user->getRegionId($idAct);
-        $results = $this->findDetailsSurveyByActivityIdByEmployeIdService($idAct,$user);
+        $results = $this->findDetailsSurveyByActivityIdByEmployeIdProductActivity($idAct);
 
         $data =[];
         
@@ -829,7 +838,7 @@ class LogicService {
                     $data[]= $this->initTableProductActivity($result);
                 }
             } else {
-                if (($result['region_id'] === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
+                if ((intval($result['region_id']) === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
                     $data[]= $this->initTableProductActivity($result);
                 }else {
                     if ($user->getZoneInfluence($idAct) === 4) {
@@ -848,6 +857,173 @@ class LogicService {
         
         return $data;
     }
+
+
+ /**
+     * Give all detail survey whom had been pushed 
+     *
+     * @param [int] $idAct
+     * @return void
+     */
+     public function findDetailsSurveyByActivityIdPeriodeProduct($idAct,$startDate,$endDate){
+        
+                $QUERY = 'SELECT DISTINCT target.product_id AS product_id,target.region_id,pos.id pos_id ,ps.quantityIn AS quantity_in ,ps.quantity AS quantity,target.quantity AS quantity_target, ps.date_submit AS date_submit,su.date_submit date,ps.survey_id,su.quarter_id quarter_id,su.user_id user_id
+                                                            FROM target ,product p,product_survey ps,survey su,quarter q,activity_user au,sector s,town t,p_o_s pos
+                                                            WHERE su.id = ps.survey_id
+                                                            AND p.id = ps.product_id
+                                                            AND target.product_id =p.id
+                                                            AND su.user_id = au.user_id
+                                                            AND su.pos_id = pos.id
+                                                            AND pos.quarter_id = q.id
+                                                            AND q.sector_id =s.id
+                                                            AND s.id = au.sector_id
+                                                            AND s.town_id = t.id
+                                                            AND target.region_id = t.region_id
+                                                            AND au.activity_id = :idAct
+                                                            AND target.start_date <= ps.date_submit
+                                                            AND target.end_date >= ps.date_submit
+                                                            AND ps.date_submit BETWEEN CAST(:debut AS DATE) AND CAST(:fin AS DATE)
+                                                            AND ps.quantityIn IS NOT NULL 
+                ' ; 
+                $results = $this->em->getConnection()->prepare($QUERY);
+                    $results->bindValue('idAct', $idAct);
+                    $results->bindValue('fin', $endDate);
+                    $results->bindValue('debut', $startDate);
+                    $results->execute();
+                $results = $results->fetchAll();
+        
+                return $results;
+            }
+
+
+    /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    
+     public function filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate){
+        $user = $this->em->getRepository('AppBundle:User')->find($userId);
+        $regionId = $user->getRegionId($idAct);
+        $results = $this->findDetailsSurveyByActivityIdPeriodeProduct($idAct,$startDate,$endDate);
+        
+        
+        $data =[];
+        
+          foreach ($results as $result) {
+           
+            
+            if ($regionId === -1 || $regionId === 0) {
+                if (in_array($result['region_id'],$user->getListOfIdReferenceAreaByActivityId($idAct))) {
+                    $data[]= $this->initTableProductActivity($result);
+                }
+            } else {
+               
+                if ((intval($result['region_id']) === $regionId) && ($user->getZoneInfluence($idAct) === 5)) {
+                    
+                    $data[]= $this->initTableProductActivity($result);
+                }else {
+                    if ($user->getZoneInfluence($idAct) === 4) {
+                        if (in_array($this->em->getRepository('ApiBundle:Quarter')->find($result['quarter_id'])->getSector()->getId(),$user->getListOfIdReferenceAreaByActivityId($idAct))) {
+                            $data[]= $this->initTableService($result);
+                        }
+                    } else {
+                      //  var_dump(in_array($result['quarter_id'],$user->getListOfIdReferenceAreaByActivityId($idAct))&&(in_array($result['user_id'],$this->getContentIds($idAct,$userId))));
+                        //die();
+                        
+                        if (in_array($this->em->getRepository('ApiBundle:POS')->find($result['pos_id'])->getQuarter()->getId(),$user->getListOfIdReferenceAreaByActivityId($idAct))&&(in_array($result['user_id'],$this->getContentIds($idAct,$userId)))) {
+                            $data[]= $this->initTableProductActivity($result);
+                        }
+                    }
+                    
+                }
+            }
+
+        } 
+        return $data;
+    }        
+
+    /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    
+     public function filterSurveyByUserAndActivityPeriodeSumProduct($idAct,$userId,$startDate,$endDate){
+        
+        $results = $this->filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+        $productResult = array();
+        $dateResult = array();
+        $userResult = array();
+        $quantityInResult = array();
+        $targetResult = array();
+
+          foreach ($results as $result) {
+            $userResult[$result['user_id']]=0;
+          } 
+           
+            foreach (array_keys($userResult) as $user_id) {
+
+                foreach ($results as $result) {
+                    $productResult[$result['product_id']]=0;
+                    $targetResult[$result['product_id']]= 0 ;
+                    $quantityInResult[$result['product_id']] = 0;
+                    $dateResult[$result['date_submit']]=0;
+                }
+               
+                 $arr = array();
+                foreach (array_keys($productResult) as $produit_id) {
+                    $arr[$produit_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$produit_id][$date_value] = 0;
+                    }
+                } 
+
+                //$arr[1]['2018-04-20']
+                //var_dump($arr[1]['2018-04-20']);
+                //die();
+
+                foreach ($results as $result) {
+                   // var_dump(intval($result['user_id'])===$user_id);
+                   // die();
+                        if(intval($result['user_id'])===$user_id){
+
+                            $productResult[$result['product_id']] += $result['quantity'] ;
+
+                           if($arr[$result['product_id']][$result['date_submit']]===0){
+                                $quantityInResult[$result['product_id']] += $result['quantity_in'];
+                                $targetResult[$result['product_id']] += $result['quantity_target'] ;
+                               $arr[$result['product_id']][$result['date_submit']]=1;
+                           }
+                        }
+                    }
+                        
+              //  }
+                // var_dump($productResult);
+               // die();
+                foreach (array_keys($productResult) as $product_id) {
+                    $data[] = array('product_id' => $product_id,
+                                    'quantity'=>$productResult[$product_id],
+                                    'quantity_in'=>$quantityInResult[$product_id],
+                                    'quantity_target'=> $targetResult[$product_id],
+                                    'user_id'=> $user_id
+                                );
+                }
+            
+            }   
+        return $data;
+    }
+
 
     public function initTableProductActivity($inArray){
         

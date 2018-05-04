@@ -66,9 +66,9 @@ class ServiceController extends Controller
          $sector = 3;
         //  $debut = new dateTime();
       //$fin = new DateTime();
-         $debut = '2018-04-1';
-         $fin = '2018-04-30';
-        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumService($act,$user,$debut,$fin));
+         $debut = '2018-04-20';
+         $fin = '2018-04-20';
+        return new JsonResponse($service->getFormStructureByActivityId($act));
      } 
 
 }
