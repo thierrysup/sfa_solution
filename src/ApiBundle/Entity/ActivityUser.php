@@ -5,6 +5,7 @@ namespace ApiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\Exclude;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -129,7 +130,7 @@ class ActivityUser
      * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Sector", inversedBy="activityUsers",cascade={"persist"})
      * @ORM\JoinColumn(name="sector_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
      * @Type("ApiBundle\Entity\Sector")
-     * @MaxDepth(1)
+     * @MaxDepth(0)
      */
     private $sector;
 
@@ -170,6 +171,7 @@ class ActivityUser
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
      * @Type("AppBundle\Entity\User")
      * @MaxDepth(1)
+     * @Exclude
      */
     private $user;
 
@@ -180,6 +182,7 @@ class ActivityUser
      * @ORM\JoinColumn(name="activity_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
      * @Type("ApiBundle\Entity\Activity")
      * @MaxDepth(1)
+     * @Exclude
      */
     private $activity;
 

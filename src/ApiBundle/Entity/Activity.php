@@ -5,6 +5,7 @@ namespace ApiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\Exclude ;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -85,6 +86,8 @@ class Activity
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Product", mappedBy="activity",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Product>")
+     * @MaxDepth(1)
+     * @Exclude
      */
     private $products;
 
@@ -93,6 +96,8 @@ class Activity
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="activity",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     * @MaxDepth(1) 
+     * @Exclude
      */
     private $activityUsers;
 

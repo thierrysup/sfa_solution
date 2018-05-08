@@ -5,6 +5,7 @@ namespace ApiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\Exclude;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -63,6 +64,7 @@ class Sector
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="sector",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     * @Exclude
      */
     private $activityUsers;
 
@@ -71,6 +73,7 @@ class Sector
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Quarter", mappedBy="sector",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Quarter>")
+     * @Exclude
      */
     private $quarters;
 

@@ -5,6 +5,7 @@ namespace ApiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\Exclude;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -95,6 +96,7 @@ class Entreprise
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Activity", mappedBy="entreprise",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Activity>")
+     * @Exclude
      */
     private $activities;
 

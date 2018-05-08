@@ -5,7 +5,8 @@ namespace AppBundle\Entity;
 use FOS\UserBundle\Model\User as BaseUser;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
-use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\MaxDepth; 
+use JMS\Serializer\Annotation\Exclude; 
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -52,6 +53,8 @@ class User extends BaseUser
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="user",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     * @MaxDepth(1)
+     * @Exclude
      */
     protected $activityUsers;
 
