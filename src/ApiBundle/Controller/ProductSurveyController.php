@@ -36,7 +36,7 @@ class ProductSurveyController extends Controller
                 $serializer = SerializerBuilder::create()->build();
                 $productSurvey = $serializer->serialize($productSurvey, 'json');
         
-                $response =  new JsonResponse($productSurvey, Response::HTTP_OK);        
+                $response =  new Response($productSurvey, Response::HTTP_OK);        
                 return $response;
     }
 
