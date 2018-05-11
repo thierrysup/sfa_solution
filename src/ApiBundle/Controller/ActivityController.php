@@ -25,16 +25,20 @@ class ActivityController extends Controller
      *
      * @Route("/", name="activity_index")
      * @Method("GET")
+     *
+     * @return Response
      */
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
         
                 $activity = $em->getRepository('ApiBundle:Activity')->findAll();
-        
-                $data =  $this->get('jms_serializer')->serialize($activity, 'json');
+                $serializer = SerializerBuilder::create()->build();
+                $activity = $serializer->serialize($activity, 'json');
+      //  $data =  $this->get('jms_serializer')->serialize($activity, 'json');
 
-                $response =  new Response($data, Response::HTTP_OK);
+               // $response =  new Response($data, Response::HTTP_OK);
+               $response ="nous";
         return $response;
     }
 

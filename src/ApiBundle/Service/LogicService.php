@@ -103,6 +103,8 @@ class LogicService {
         $results = $results->fetchAll();
         return $results;
     }
+
+
     /**
      * Lits of Managers and corresponding subalterns for each activity
      *
@@ -127,6 +129,8 @@ class LogicService {
 
         return $results;
     }
+
+
     /**
      * List of activities for this user
      *
@@ -159,6 +163,7 @@ class LogicService {
 
         return $results;
     }
+
     /**
      * List of user who pushing survey data
      *
@@ -203,6 +208,21 @@ class LogicService {
         return $ids;
     }
 
+    public function getAct(){
+
+        $QUERY = 'SELECT a.id,a.name nameAct,a.start_date,a.end_date,e.logoURL,e.name nameEntreprise,e.adresse,e.pobox,e.phone
+        FROM activity a,entreprise e
+        WHERE a.status = 1
+        AND e.id = a.entreprise_id
+        ';
+        $results = $this->em->getConnection()->prepare($QUERY);
+        $results->execute();
+        $results = $results->fetchAll();
+
+    return $results;
+    }
+
+
     /**
      * Get operational resources for one manager
      *
@@ -211,8 +231,8 @@ class LogicService {
      * @return void
      */
     public function findResourceOTerrainByActivityAndByManager($idAct,$userId){
-        $QUERY = 'SELECT DISTINCT(u.id) , u.username 
-        FROM user_manager um ,activity a,user u,activity_user ua
+        $QUERY = 'SELECT DISTINCT(u.id) , u.username , s.description , u.phone
+        FROM user_manager um ,activity a,user u,activity_user ua,sector s
         WHERE ua.user_id = u.id
           AND ua.activity_id = :idAct
           AND ua.mobility = 1
@@ -226,6 +246,7 @@ class LogicService {
                                         WHERE  user.id  IN (SELECT Um.manager_id idu FROM user_manager Um WHERE Um.activity_id = :idAct)
                                 )
           AND a.id = :idAct
+          AND s.id = ua.sector_id
           AND u.enabled = 1
           AND a.status = 1
           AND ua.status = 1
@@ -282,6 +303,7 @@ class LogicService {
      * @return void
      */
     public function findSurveyByRelativeTargetAndActivityIdAndUserIdService($idAct,$userId){
+
 
         $QUERY = 'SELECT product.activity_id,product.name,SUM(tab1.quantity) AS summRea,SUM(tab1.quantity_target) AS summObj,
         ((SUM(tab1.quantity)/SUM(tab1.quantity_target))*100) AS pourcentage
@@ -511,7 +533,7 @@ class LogicService {
         $user = $this->em->getRepository('AppBundle:User')->find($userId);
         $regionId = $user->getRegionId($idAct);
         $results = $this->findDetailsSurveyByActivityIdPeriodeService($idAct,$startDate,$endDate);
-        
+       
         
         $data =[];
         
@@ -531,8 +553,8 @@ class LogicService {
                             $data[]= $this->initTableService($result);
                         }
                     } else {
-                      //  var_dump(in_array($result['quarter_id'],$user->getListOfIdReferenceAreaByActivityId($idAct))&&(in_array($result['user_id'],$this->getContentIds($idAct,$userId))));
-                        //die();
+                       /*  var_dump(in_array($result['quarter_id'],$user->getListOfIdReferenceAreaByActivityId($idAct))&&(in_array($result['user_id'],$this->getContentIds($idAct,$userId))));
+                        die(); */
                         if ((in_array($result['quarter_id'],$user->getListOfIdReferenceAreaByActivityId($idAct)))&&(in_array($result['user_id'],$this->getContentIds($idAct,$userId)))) {
                             $data[]= $this->initTableService($result);
                         }
@@ -558,6 +580,8 @@ class LogicService {
     public function filterSurveyByUserAndActivityPeriodeSumService($idAct,$userId,$startDate,$endDate){
         
         $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+
+        
         
         $data =[];
         $productResult = array();

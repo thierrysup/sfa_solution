@@ -31,10 +31,59 @@ class ServiceController extends Controller
         $debut = '2018-04-1';
         $fin = '2018-04-30';
             
-        return new JsonResponse($service->rapportUserPerfornanceService($user,$act));
+        return new JsonResponse($service->findResourceOTerrainByActivityAndByManager($user,$act));
+
+    }
+    
+    /**
+     *
+     * @Route("/activity", name="activity_journalier")
+     * @Method({"GET"})
+     */
+     public function activityAction( )
+     {
+        $service = $this->get('logic_services');
+        return new JsonResponse($service->getAct());
+    }
+
+
+    /**
+     *
+     * @Route("/ba/{act}/{user}", name="ba_act_user")
+     * @Method({"GET"})
+     */
+     public function activityUserBaAction($act,$user )
+     {
+        $service = $this->get('logic_services');
+      // $user = 1;
+      //  $act = 1;
+        $product=2;
+
+        $debut = '2018-04-1';
+        $fin = '2018-04-30';
+            
+        return new JsonResponse($service->findResourceOTerrainByActivityAndByManager($act,$user));
 
     }
 
+     /**
+     *
+     * @Route("/report/{act}/{user}", name="report_list")
+     * @Method({"GET"})
+     */
+     public function reportSupAction($act,$user )
+     {
+        $service = $this->get('logic_services');
+      // $user = 1;
+      //  $act = 1;
+        $product=2;
+
+        $debut = '2018-04-1';
+        $fin = '2018-04-30';
+            
+        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumService($act,$user,$debut,$fin));
+
+    }
 
      /**
      *
