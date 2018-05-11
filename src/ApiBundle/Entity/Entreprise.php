@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
 use JMS\Serializer\Annotation\Exclude;
+use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -77,7 +78,7 @@ class Entreprise
 
     /**
      * @var string
-     *
+     * @Assert\Image()
      * @ORM\Column(name="logoURL", type="string", length=255)
      * @Type("string")
      */

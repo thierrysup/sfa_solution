@@ -44,13 +44,13 @@ class ServiceController extends Controller
      public function helloAction( )
      {
         $service = $this->get('logic_services');
-         $user = 6;
+         $user = 6 ;
          $act = 1;
          $product=2;
          $sector = 3;
          $debut = '2018-04-1';
          $fin = '2018-04-30';
-        return new JsonResponse($service->getFormStructureByActivityId($act));
+        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumService($act,$user,$debut,$fin));
      } 
 
 }

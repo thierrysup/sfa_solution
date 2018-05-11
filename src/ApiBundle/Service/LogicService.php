@@ -77,6 +77,51 @@ class LogicService {
         return $results;
     }
     /**
+     * find different enterprise who act one user
+     *
+     * @param [int] $id
+     * @return void
+     */
+    public function findEnterpriseByUserId($id){
+        $QUERY = 'SELECT DISTINCT en.id id_en,en.name ,en.adresse adress
+            FROM entreprise en ,activity a,activity_user ua
+            WHERE (ua.user_id = :id 
+              AND ua.activity_id = a.id 
+              AND a.entreprise_id = en.id 
+              AND en.status = 1
+              AND a.status = 1
+              AND ua.status = 1)';
+        $results = $this->em->getConnection()->prepare($QUERY);
+            $results->bindValue('id', $id);
+            $results->execute();
+        $results = $results->fetchAll();
+
+        return $results;
+    }
+
+    public function findActivitiesByEnterpriseIdByUserId($id_ent, $id_user){
+        $QUERY = 'SELECT DISTINCT en.id id_en,en.name en_name,en.colorStyle en_color,en.logoURL en_logo,ua.user_id user_id,en.adresse adress,a.id id_act, a.name name_act,r.id r_id,r.name name_role,a.start_date start_date,a.end_date end_date
+            FROM entreprise en ,activity a,activity_user ua, role r
+            WHERE (ua.user_id = :id 
+              AND ua.activity_id = a.id 
+              AND ua.role_id =r.id
+              AND en.id = :id_ent
+              AND a.entreprise_id = en.id 
+              AND r.status =1
+              AND en.status = 1
+              AND a.status = 1
+              AND ua.status = 1)';
+        $results = $this->em->getConnection()->prepare($QUERY);
+            $results->bindValue('id', $id_user);
+            $results->bindValue('id_ent', $id_ent);
+            $results->execute();
+        $results = $results->fetchAll();
+
+        return $results;
+    }
+
+
+    /**
      *  List of subalterns for one manager in one activity
      *
      * @param [int] $id
@@ -512,6 +557,8 @@ class LogicService {
         $regionId = $user->getRegionId($idAct);
         $results = $this->findDetailsSurveyByActivityIdPeriodeService($idAct,$startDate,$endDate);
         
+        var_dump($user->getRegionId($idAct));
+        die();
         
         $data =[];
         
@@ -984,7 +1031,6 @@ class LogicService {
         $user = $this->em->getRepository('AppBundle:User')->find($userId);
         $regionId = $user->getRegionId($idAct);
         $results = $this->findDetailsSurveyByActivityIdPeriodeProduct($idAct,$startDate,$endDate);
-        
 
         $data =[];
         
@@ -1019,7 +1065,7 @@ class LogicService {
 
         } 
         return $data;
-    }        
+    }
 
     /**
      * Give all survey relative by influence area of this login user for one activity on a period
