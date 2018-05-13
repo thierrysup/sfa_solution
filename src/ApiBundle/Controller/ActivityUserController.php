@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Activityuser controller.
  *
- * @Route("activityuser")
+ * @Route("/activityuser")
  */
 class ActivityUserController extends Controller
 {
@@ -29,7 +29,7 @@ class ActivityUserController extends Controller
     {
         $em = $this->getDoctrine()->getManager();
         
-                $activityUser = $em->getRepository('ApiBundle:activityUser')->findAll();
+                $activityUser = $em->getRepository('ApiBundle:ActivityUser')->findAll();
         
                 $serializer = SerializerBuilder::create()->build();
                 $activityUser = $serializer->serialize($activityUser, 'json');

@@ -5,6 +5,7 @@ namespace ApiBundle\Entity;
 use AppBundle\Entity\User;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
+use JMS\Serializer\Annotation\Exclude;
 use JMS\Serializer\Annotation\MaxDepth;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -88,6 +89,7 @@ class Survey
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ProductSurvey", mappedBy="survey",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ProductSurvey>")
+     * @Exclude
      */
     private $productsurveys;
 

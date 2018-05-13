@@ -5,6 +5,7 @@ namespace ApiBundle\Controller;
 use ApiBundle\Entity\Entreprise;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Entreprise controller.
  *
- * @Route("entreprise")
+ * @Route("enterprise")
  */
 class EntrepriseController extends Controller
 {
@@ -39,6 +40,43 @@ class EntrepriseController extends Controller
     }
 
     /**
+     * Lists all entreprise entities.
+     *
+     * @Route("/user/{id}", name="entreprise_user_index")
+     * @Method("GET")
+     */
+    public function findEnterpriseByUserIdAction($id)
+    {
+        $service = $this->get('logic_services');
+        $entreprises = $service->findEnterpriseByUserId($id);
+        $results=[];
+
+        foreach ($entreprises as $entreprise) {
+            $results[]=array(
+                'path' => $entreprise['name'],
+                'enterprise_id' => $entreprise['id_en'],
+                'currentUser_id' => $id,
+                'title' => strtoupper($entreprise['name']),
+                'ab' => strtoupper(substr($entreprise['name'],0,2)),
+            );
+        }
+
+        return new JsonResponse($results,Response::HTTP_OK);
+    }
+    /**
+     * find activities by enterprise for one user ...
+     *
+     * @Route("/{ent_id}/{user_id}", name="activities_enterprise_user_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function findActivitiesByEnterpriseIdByUserIdAction($ent_id, $user_id) {
+        $service = $this->get('logic_services');
+        $listActivitiesDetail = $service->findActivitiesByEnterpriseIdByUserId($ent_id, $user_id);
+        return new JsonResponse($listActivitiesDetail,Response::HTTP_OK);
+    }
+
+    /**
      * Creates a new entreprise entity.
      *
      * @Route("/new", name="entreprise_new")
@@ -47,7 +85,8 @@ class EntrepriseController extends Controller
     public function newAction(Request $request)
     {
         $data = $request->getContent();
-        
+        $uploadedImage=$request->files->get('file');
+
         $serializer = SerializerBuilder::create()->build();
         $entreprise = $serializer->deserialize($data,'ApiBundle\Entity\Entreprise', 'json');
         
@@ -56,10 +95,14 @@ class EntrepriseController extends Controller
         $entreprise->setActivity($this->getDoctrine()
         ->getRepository('ApiBundle:Activity')
         ->findOneBy(['id' => $entreprise->getActivity()->getId()]));
-    
+
+         $image=$uploadedImage;
+         $imageName=md5(uniqid()).'.'.$image->guessExtension();
+         $image->move($this->getParameter('image_directory'),$imageName);
+
+         $entreprise->setLogoURL($imageName);
         // Add our quote to Doctrine so that it can be saved
         $em->persist($entreprise);
-    
         // Save our entreprise
         $em->flush();
      $response =  new JsonResponse('It\'s probably been saved', Response::HTTP_OK);

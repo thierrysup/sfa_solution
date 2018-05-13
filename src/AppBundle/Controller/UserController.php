@@ -28,10 +28,10 @@ class UserController extends Controller
     public function indexAction()
     {
 
-        $user = $this->get('security.context')->getToken()->getUser();
+       /*  $user = $this->get('security.context')->getToken()->getUser();
         if (!is_object($user)) {
             return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
-        }
+        } */
 
         $em = $this->getDoctrine()->getManager();
         

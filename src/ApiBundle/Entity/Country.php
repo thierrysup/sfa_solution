@@ -5,6 +5,7 @@ namespace ApiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\Exclude;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -55,7 +56,7 @@ class Country
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="country",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
-     * @MaxDepth(1)
+     * @Exclude
      */
     private $activityUsers;
 
@@ -64,7 +65,7 @@ class Country
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Region", mappedBy="country",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Region>")
-     * @MaxDepth(1)
+     * @Exclude
      */
     private $regions;
 

@@ -5,6 +5,7 @@ namespace ApiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\Exclude;
 use JMS\Serializer\Annotation as Serializer;
 /**
  * POS
@@ -70,6 +71,7 @@ class POS
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Survey", mappedBy="pos",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Survey>")
+     * @Exclude
      */
     private $surveys;
 
@@ -78,6 +80,7 @@ class POS
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="pos",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
+     * @Exclude
      */
     private $activityUsers;
 

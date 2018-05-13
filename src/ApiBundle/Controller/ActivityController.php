@@ -10,13 +10,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-
 use JMS\Serializer\SerializerBuilder;
 
 /**
  * Activity controller.
  *
- * @Route("activity")
+ * @Route("/activity")
  */
 class ActivityController extends Controller
 {
@@ -33,9 +32,9 @@ class ActivityController extends Controller
         $em = $this->getDoctrine()->getManager();
         
                 $activity = $em->getRepository('ApiBundle:Activity')->findAll();
+
                 $serializer = SerializerBuilder::create()->build();
-                $activity = $serializer->serialize($activity, 'json');
-      //  $data =  $this->get('jms_serializer')->serialize($activity, 'json');
+                $data = $serializer->serialize($activity, 'json');
 
                // $response =  new Response($data, Response::HTTP_OK);
                $response ="nous";

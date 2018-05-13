@@ -5,6 +5,8 @@ namespace ApiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
+use JMS\Serializer\Annotation\Exclude;
+use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -76,7 +78,7 @@ class Entreprise
 
     /**
      * @var string
-     *
+     * @Assert\Image()
      * @ORM\Column(name="logoURL", type="string", length=255)
      * @Type("string")
      */
@@ -95,6 +97,7 @@ class Entreprise
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Activity", mappedBy="entreprise",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Activity>")
+     * @Exclude
      */
     private $activities;
 

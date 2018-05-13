@@ -3,8 +3,9 @@
 namespace ApiBundle\Service;
 
 use Doctrine\ORM\EntityManager;
+use ApiBundle\dto\UserDto;
 
-class LogicService {
+class MobileService {
 
     public function __construct(EntityManager $em) {
         $this->em = $em;
@@ -76,6 +77,51 @@ class LogicService {
 
         return $results;
     }
+    /**
+     * find different enterprise who act one user
+     *
+     * @param [int] $id
+     * @return void
+     */
+    public function findEnterpriseByUserId($id){
+        $QUERY = 'SELECT DISTINCT en.id id_en,en.name ,en.adresse adress
+            FROM entreprise en ,activity a,activity_user ua
+            WHERE (ua.user_id = :id 
+              AND ua.activity_id = a.id 
+              AND a.entreprise_id = en.id 
+              AND en.status = 1
+              AND a.status = 1
+              AND ua.status = 1)';
+        $results = $this->em->getConnection()->prepare($QUERY);
+            $results->bindValue('id', $id);
+            $results->execute();
+        $results = $results->fetchAll();
+
+        return $results;
+    }
+
+    public function findActivitiesByEnterpriseIdByUserId($id_ent, $id_user){
+        $QUERY = 'SELECT DISTINCT en.id id_en,en.name en_name,en.colorStyle en_color,en.logoURL en_logo,ua.user_id user_id,en.adresse adress,a.id id_act, a.name name_act,r.id r_id,r.name name_role,a.start_date start_date,a.end_date end_date
+            FROM entreprise en ,activity a,activity_user ua, role r
+            WHERE (ua.user_id = :id 
+              AND ua.activity_id = a.id 
+              AND ua.role_id =r.id
+              AND en.id = :id_ent
+              AND a.entreprise_id = en.id 
+              AND r.status =1
+              AND en.status = 1
+              AND a.status = 1
+              AND ua.status = 1)';
+        $results = $this->em->getConnection()->prepare($QUERY);
+            $results->bindValue('id', $id_user);
+            $results->bindValue('id_ent', $id_ent);
+            $results->execute();
+        $results = $results->fetchAll();
+
+        return $results;
+    }
+
+
     /**
      *  List of subalterns for one manager in one activity
      *
@@ -210,7 +256,7 @@ class LogicService {
 
     public function getAct(){
 
-        $QUERY = 'SELECT a.id,a.name nameAct,a.start_date,a.end_date,e.logoURL,e.name nameEntreprise,e.adresse,e.pobox,e.phone
+        $QUERY = 'SELECT a.id,a.name nameAct, a.typeActivity ,a.start_date,a.end_date,e.logoURL,e.name nameEntreprise,e.adresse,e.pobox,e.phone
         FROM activity a,entreprise e
         WHERE a.status = 1
         AND e.id = a.entreprise_id
@@ -492,12 +538,15 @@ class LogicService {
      */
     public function findDetailsSurveyByActivityIdPeriodeService($idAct,$startDate,$endDate){
 
-        $QUERY = 'SELECT DISTINCT target.product_id AS product_id,target.region_id ,ps.quantity AS quantity,target.quantity AS quantity_target, ps.date_submit AS date_submit,su.date_submit date,ps.survey_id,su.quarter_id quarter_id,su.user_id user_id
-                                                    FROM target ,product p,product_survey ps,survey su,quarter q,activity_user au,sector s,town t
+        $QUERY = 'SELECT DISTINCT target.product_id AS product_id, p.name AS product_name,target.region_id ,ps.quantity AS quantity,
+        target.quantity AS quantity_target, ps.date_submit AS date_submit, user.phone AS phone,
+        user.username As nameBa, su.date_submit date,ps.survey_id,su.quarter_id quarter_id,su.user_id user_id
+                                                    FROM target ,product p,product_survey ps,survey su,quarter q,activity_user au,sector s,town t,user
                                                     WHERE su.id = ps.survey_id
                                                     AND p.id = ps.product_id
                                                     AND target.product_id =p.id
                                                     AND su.user_id = au.user_id
+                                                    AND user.id = su.user_id
                                                     AND su.quarter_id = q.id
                                                     AND q.sector_id =s.id
                                                     AND s.id = au.sector_id
@@ -576,21 +625,22 @@ class LogicService {
      * @param [date] $endDate
      * @return void
      */
-    
     public function filterSurveyByUserAndActivityPeriodeSumService($idAct,$userId,$startDate,$endDate){
         
         $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
-
-        
         
         $data =[];
         $productResult = array();
         $dateResult = array();
         $userResult = array();
         $targetResult = array();
+        $dtoResult = array();
+        $productName = array();
 
           foreach ($results as $result) {
             $userResult[$result['user_id']]=0;
+            $dtoResult[$result['user_id']] = new UserDto($result['nameBa'],$result['phone']);
+            $productName[$result['product_id']] = $result['product_name'];
           } 
            
             foreach (array_keys($userResult) as $user_id) {
@@ -625,7 +675,10 @@ class LogicService {
                     $data[] = array('product_id' => $product_id,
                                     'quantity'=>$productResult[$product_id],
                                     'quantity_target'=> $targetResult[$product_id],
-                                    'user_id'=> $user_id
+                                    'user_id'=> $user_id,
+                                    'nameBa'=> $dtoResult[$user_id]->getUsername(),
+                                    'product_name'=> $productName[$product_id],                                    
+                                    'phone'=> $dtoResult[$user_id]->getPhone(),
                                 );
                 }
             
@@ -652,7 +705,7 @@ class LogicService {
         $data =[];
         $quantityResult = array();
         $productResult = array();
-        $dateResult = array();
+        $dateResult = array();  
         $userResult = array();
         $targetResult = array();
 
@@ -725,7 +778,10 @@ class LogicService {
                         'quantity_target'=> $inArray['quantity_target'],
                         'user_id'=> $inArray['user_id'],
                         'date_submit'=> $inArray['date_submit'],
-                        'date'=> $inArray['date']
+                        'date'=> $inArray['date'],
+                        'product_name'=> $inArray['product_name'],
+                        'nameBa'=> $inArray['nameBa'],
+                        'phone'=>$inArray['phone'],
                     );
     }
 
@@ -965,12 +1021,13 @@ class LogicService {
      */
      public function findDetailsSurveyByActivityIdPeriodeProduct($idAct,$startDate,$endDate){
         
-                $QUERY = 'SELECT DISTINCT target.product_id AS product_id,target.region_id,pos.id pos_id ,ps.quantityIn AS quantity_in ,ps.quantity AS quantity,target.quantity AS quantity_target, ps.date_submit AS date_submit,su.date_submit date,ps.survey_id,su.quarter_id quarter_id,su.user_id user_id
-                                                            FROM target ,product p,product_survey ps,survey su,quarter q,activity_user au,sector s,town t,p_o_s pos
+                $QUERY = 'SELECT DISTINCT target.product_id AS product_id,p.name product_name,target.region_id,pos.id pos_id, user.username, user.phone ,ps.quantityIn AS quantity_in ,ps.quantity AS quantity,target.quantity AS quantity_target, ps.date_submit AS date_submit,su.date_submit date,ps.survey_id,su.quarter_id quarter_id,su.user_id user_id
+                                                            FROM target ,product p,product_survey ps,survey su,quarter q,activity_user au,sector s,town t,p_o_s pos,user 
                                                             WHERE su.id = ps.survey_id
                                                             AND p.id = ps.product_id
                                                             AND target.product_id =p.id
                                                             AND su.user_id = au.user_id
+                                                            AND user.id = su.user_id
                                                             AND su.pos_id = pos.id
                                                             AND pos.quarter_id = q.id
                                                             AND q.sector_id =s.id
@@ -1003,12 +1060,11 @@ class LogicService {
      * @param [date] $endDate
      * @return void
      */
-    
+                    
      public function filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate){
         $user = $this->em->getRepository('AppBundle:User')->find($userId);
         $regionId = $user->getRegionId($idAct);
         $results = $this->findDetailsSurveyByActivityIdPeriodeProduct($idAct,$startDate,$endDate);
-        
 
         $data =[];
         
@@ -1043,7 +1099,7 @@ class LogicService {
 
         } 
         return $data;
-    }        
+    }
 
     /**
      * Give all survey relative by influence area of this login user for one activity on a period
@@ -1056,7 +1112,7 @@ class LogicService {
      */
     
      public function filterSurveyByUserAndActivityPeriodeSumProduct($idAct,$userId,$startDate,$endDate){
-        
+                        
         $results = $this->filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate);
         
         $data =[];
@@ -1065,9 +1121,16 @@ class LogicService {
         $userResult = array();
         $quantityInResult = array();
         $targetResult = array();
+        $product_name = array();
+        $username = array();
+        $phone = array();
+        
 
           foreach ($results as $result) {
             $userResult[$result['user_id']]=0;
+            $username[$result['user_id']] = $result['username'];
+            $phone[$result['user_id']] = $result['phone'];
+            $product_name[$result['product_id']] = $result['product_name'];
           } 
            
             foreach (array_keys($userResult) as $user_id) {
@@ -1114,7 +1177,10 @@ class LogicService {
                                     'quantity'=>$productResult[$product_id],
                                     'quantity_in'=>$quantityInResult[$product_id],
                                     'quantity_target'=> $targetResult[$product_id],
-                                    'user_id'=> $user_id
+                                    'user_id'=> $user_id,
+                                    'product_name' => $product_name[$product_id],
+                                    'name_ba' => $username[$user_id],
+                                    'phone' => $phone[$user_id] 
                                 );
                 }
             
@@ -1134,13 +1200,11 @@ class LogicService {
                         'quantity_in'=> $inArray['quantity_in'],
                         'user_id'=> $inArray['user_id'],
                         'date_submit'=> $inArray['date_submit'],
-                        'date'=> $inArray['date']
+                        'date'=> $inArray['date'],
+                        'product_name'=> $inArray['product_name'],
+                        'username' => $inArray['username'],
+                        'phone' => $inArray['phone'],  
                     );
     }
-
-
-
-
-
 
 }
