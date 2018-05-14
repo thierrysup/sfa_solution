@@ -100,7 +100,7 @@ class LogicService {
     }
 
     public function findActivitiesByEnterpriseIdByUserId($id_ent, $id_user){
-        $QUERY = 'SELECT DISTINCT en.id id_en,en.name en_name,en.colorStyle en_color,en.logoURL en_logo,ua.user_id user_id,en.adresse adress,a.id id_act, a.name name_act,r.id r_id,r.name name_role,a.start_date start_date,a.end_date end_date
+        $QUERY = 'SELECT DISTINCT en.id id_en,en.name en_name,en.colorStyle en_color,en.logoURL en_logo,ua.user_id user_id,en.adresse adress,a.id id_act, a.name name_act,a.typeActivity type_act,r.id r_id,r.name name_role,a.start_date start_date,a.end_date end_date
             FROM entreprise en ,activity a,activity_user ua, role r
             WHERE (ua.user_id = :id 
               AND ua.activity_id = a.id 
@@ -148,6 +148,7 @@ class LogicService {
         $results = $results->fetchAll();
         return $results;
     }
+    
     /**
      * Lits of Managers and corresponding subalterns for each activity
      *
@@ -557,8 +558,8 @@ class LogicService {
         $regionId = $user->getRegionId($idAct);
         $results = $this->findDetailsSurveyByActivityIdPeriodeService($idAct,$startDate,$endDate);
         
-        var_dump($user->getRegionId($idAct));
-        die();
+       /*  var_dump($user->getRegionId($idAct));
+        die(); */
         
         $data =[];
         
