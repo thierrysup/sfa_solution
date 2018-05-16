@@ -48,40 +48,132 @@ class MobileServiceController extends Controller
 
      /**
      *
-     * @Route("/report/", name="mobile_report_service_list")
+     * @Route("/report/{act}/{user}/{debut}/{fin}", name="mobile_report_service_list")
      * @Method({"GET"})
      */
-     public function reportSupAction()
+     public function reportSupAction($act,$user,$debut,$fin)
      {
         $service = $this->get('mobile_services');
         $product=2;
-        $act = 1; 
-        $user = 1;
-        $debut = '2018-04-1';
-        $fin = '2018-04-30';
+      //  $act = 1; 
+      //  $user = 6;
+       //  = '2018-04-1';
+       // $fin = '2018-04-30';
             
-        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumService($act,$user,$debut,$fin));
+        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumService(intval($act),intval($user),
+        date('Y-m-d', strtotime($debut)),date('Y-m-d H:i', strtotime($fin))));
 
     }
 
     /**
      *
-     * @Route("/reportProduct/", name="mobile_report_product_list")
+     * @Route("/reportProduct/{act}/{user}/{debut}/{fin}", name="mobile_report_product_list")
      * @Method({"GET"})
      */
-     public function reportProductSupAction()
+     public function reportProductSupAction($act,$user,$debut,$fin)
      {
         $service = $this->get('mobile_services');
-        $user =1;
-        $act = 1;
+       // $user =6;
+       // $act = 1;
         $product=2;
 
-        $debut = '2018-04-1';
-        $fin = '2018-04-30';
+       // $debut = '2018-04-1';
+       // $fin = '2018-05-30';
             
-        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumProduct(intval($act),intval($user),$debut,$fin));
+        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumProduct(intval($act),intval($user),
+        date('Y-m-d', strtotime($debut)),date('Y-m-d', strtotime($fin))));
 
     }
+    
+
+    /**
+     *
+     * @Route("/db/{act}/{user}/{debut}/{fin}", name="mobile_db_product_list")
+     * @Method({"GET"})
+     */
+     public function dbAction($act,$user,$debut,$fin)
+     {
+        $service = $this->get('mobile_services');
+       // $user =6;
+       // $act = 1;
+        $product=2;
+
+       // $debut = '2018-04-1';
+       // $fin = '2018-05-30';
+            
+        return new JsonResponse($service->filterSurveyByUserAndActivityPeriodeSumGroupByDateService(intval($act),intval($user),
+        date('Y-m-d', strtotime($debut)),date('Y-m-d', strtotime($fin))));
+
+    }
+
+     /**
+     *
+     * @Route("/serviceDateQte/{act}/{user}/{debut}/{fin}", name="mobile_serviceDateQte_product_list")
+     * @Method({"GET"})
+     */
+     public function serviceDateAndQuantityAction($act,$user,$debut,$fin)
+     {
+        $service = $this->get('mobile_services');
+       // $user =6;
+       // $act = 1;
+        $product=2;
+
+       // $debut = '2018-04-1';
+       // $fin = '2018-05-30';
+
+            
+        return new JsonResponse($service->DiagrammeDateAndQuantityByService(intval($act),intval($user),
+        date('Y-m-d', strtotime($debut)),date('Y-m-d', strtotime($fin))));
+
+    }
+
+     /**
+     *
+     * @Route("/productDateQte/{act}/{user}/{debut}/{fin}", name="mobile_productDateQte_product_list")
+     * @Method({"GET"})
+     */
+     public function productDateAndQuantityAction($act,$user,$debut,$fin)
+     {
+        $service = $this->get('mobile_services');
+        return new JsonResponse($service->DiagrammeDateAndQuantityByProduct(intval($act),intval($user),
+        date('Y-m-d', strtotime($debut)),date('Y-m-d', strtotime($fin))));
+
+    }
+
+    /**
+     *
+     * @Route("/serviceQte/{act}/{user}/{debut}/{fin}", name="mobile_dbserviceQte_service_list")
+     * @Method({"GET"})
+     */
+     public function serviceQteAction($act,$user,$debut,$fin)
+     {
+        $service = $this->get('mobile_services');
+       // $user =6;
+       // $act = 1;
+        $product=2;
+
+       // $debut = '2018-04-1';
+       // $fin = '2018-05-30';
+            
+        return new JsonResponse($service->filterSurveyByActivityPeriodeSumService(intval($act),intval($user),
+        date('Y-m-d', strtotime($debut)),date('Y-m-d', strtotime($fin))));
+
+    }
+
+    /**
+     *
+     * @Route("/productQte/{act}/{user}/{debut}/{fin}", name="mobile_dbproductQte_product_list")
+     * @Method({"GET"})
+     */
+     public function productQteAction($act,$user,$debut,$fin)
+     {
+        $service = $this->get('mobile_services');        
+        return new JsonResponse($service->filterSurveyAndActivityPeriodeSumProduct(intval($act),intval($user),
+        date('Y-m-d', strtotime($debut)),date('Y-m-d', strtotime($fin))));
+
+    }
+
+
 
 
 
@@ -100,7 +192,7 @@ class MobileServiceController extends Controller
         $debut = '2018-04-1';
         $fin = '2018-04-30';
             
-        return new JsonResponse($service->findResourceOTerrainByActivityAndByManager($act,$user));
+        return new JsonResponse($service->findResourceOTerrainByActivityAndByManager(intval($act),intval($user)));
     }
 
     

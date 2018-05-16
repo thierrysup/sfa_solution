@@ -688,6 +688,49 @@ class MobileService {
         return $data;
     }
 
+
+
+     /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+     public function filterSurveyByActivityPeriodeSumService($idAct,$userId,$startDate,$endDate){
+        
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+        $productResult = array();       
+        $productName = array();
+
+          foreach ($results as $result) {
+            $productName[$result['product_id']] = $result['product_name'];
+          } 
+           
+                foreach ($results as $result) {
+                    $productResult[$result['product_id']]=0;
+                }
+ 
+                foreach ($results as $result) {
+                     $productResult[$result['product_id']] += $result['quantity'] ;
+                }
+                    
+                        
+                foreach (array_keys($productResult) as $product_id) {
+                    $data[] = array('product_id' => $product_id,
+                                    'quantity'=>$productResult[$product_id],
+                                    'product_name'=> $productName[$product_id],                                    
+                                    
+                                );
+                }
+            
+        return $data;
+    }
+
     /**
      * Give all survey relative by influence area of this login user for one activity on a period
      *
@@ -709,9 +752,7 @@ class MobileService {
         $userResult = array();
         $targetResult = array();
 
-          foreach ($results as $result) {
-            $userResult[$result['user_id']]=0;
-          } 
+           
            
             foreach (array_keys($userResult) as $user_id) {
 
@@ -767,6 +808,123 @@ class MobileService {
         return $data;
     }
 
+ /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */ 
+    public function DiagrammeDateAndQuantityByService($idAct,$userId,$startDate,$endDate){
+
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+        $data =[];
+        $quantityResult = array();
+        $productResult = array();
+        $dateResult = array();
+       
+
+                foreach ($results as $result) {
+                    $productResult[$result['product_id']]=$result['product_name'];
+                }
+                
+        foreach (array_keys($productResult) as $product_id) {   
+            foreach ($results as $result) {
+                $dateResult[$result['date_submit']]=0;
+              
+            }
+           ksort($dateResult);
+         
+
+            foreach (array_keys($dateResult) as $date_value) {
+
+                                        
+                    foreach ($results as $result) {
+                        
+                        if(($result['date_submit'] === $date_value)&& (intval($result['product_id'])===$product_id)){
+                            
+                           $dateResult[$result['date_submit']] += intval($result['quantity']) ;
+                        }
+                    }   
+                        }  
+                        $data[] = array('product_id' => $product_id,
+                                            'quantity'=>array_values($dateResult),
+                                            'dates'=>array_keys($dateResult),                                      
+                                            'product_name'=>$productResult[$product_id],
+                                        );
+                        
+                    }   
+           
+        return $data;
+    }
+
+
+    /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */ 
+     public function DiagrammeDateAndQuantityByServiceCopy($idAct,$userId,$startDate,$endDate){
+        
+                $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+                var_dump($results);
+                die();
+                $data =[];
+                $quantityResult = array();
+                $productResult = array();
+                $dateResult = array();
+                $targetResult = array();
+                $productName = array();
+        
+        
+                        foreach ($results as $result) {
+                            $productResult[$result['product_id']]=0;
+                            $dateResult[$result['date_submit']]=0;
+                            $productName[$result['product_id']] = $result['product_name'];                    
+                        }
+        
+                        $arr = array();
+                        foreach (array_keys($productResult) as $product_id) {
+                            $arr[$product_id] = array();
+                            foreach (array_keys($dateResult) as $date_value) {
+                                $arr[$product_id][$date_value] = 0;
+                            }
+                        } 
+        
+                        foreach (array_keys($dateResult) as $date_value) {
+        
+                            foreach ($results as $result) {
+                                $quantityResult[$result['product_id']]=0;
+                                $targetResult[$result['product_id']]= 0 ;
+                            }                    
+                            foreach ($results as $result) {
+                                if(($result['date_submit'] === $date_value) ){
+                                    $quantityResult[$result['product_id']] += $result['quantity'] ;
+                                if($arr[$result['product_id']][$result['date_submit']]===0){
+                                    $targetResult[$result['product_id']] += $result['quantity_target'] ;
+                                    $arr[$result['product_id']][$result['date_submit']]=1;
+                                    }
+                                }
+                            }
+                                        
+                                foreach (array_keys($productResult) as $product_id) {
+                                    $data[] = array('product_id' => $product_id,
+                                                    'quantity'=>$quantityResult[$product_id],
+                                                    'date_submit'=>$date_value,
+                                                    'quantity_target'=> $targetResult[$product_id],                                           
+                                                    'product_name'=> $productName[$product_id],
+                                                );
+                                }
+                            
+                            }   
+                    return $data;
+            }
 
     public function initTableService($inArray){
         
@@ -1101,6 +1259,61 @@ class MobileService {
         return $data;
     }
 
+
+    /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */ 
+     public function DiagrammeDateAndQuantityByProduct($idAct,$userId,$startDate,$endDate){
+        
+                $results = $this->filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate);
+                $data =[];
+                $quantityResult = array();
+                $productResult = array();
+                $dateResult = array();
+               
+        
+                        foreach ($results as $result) {
+                            $productResult[$result['product_id']]=$result['product_name'];
+                        }
+                        
+                foreach (array_keys($productResult) as $product_id) {   
+                    foreach ($results as $result) {
+                        $dateResult[$result['date_submit']]=0;
+                    }
+                    foreach (array_keys($dateResult) as $date_value) {
+        
+                                                
+                            foreach ($results as $result) {
+                                
+                                if(($result['date_submit'] === $date_value)&& (intval($result['product_id'])===$product_id)){
+                                    
+                                   $dateResult[$result['date_submit']] += intval($result['quantity']) ;
+                                }
+                            }   
+                                }  
+                                $data[] = array('product_id' => $product_id,
+                                                    'quantity'=>array_values($dateResult),
+                                                    'dates'=>array_keys($dateResult),                                      
+                                                    'product_name'=>$productResult[$product_id],
+                                                );
+                                
+                            }   
+                        
+                            var_dump($data);
+                            die();
+                        
+        
+                    
+                return $data;
+            }
+
+
     /**
      * Give all survey relative by influence area of this login user for one activity on a period
      *
@@ -1150,13 +1363,8 @@ class MobileService {
                     }
                 } 
 
-                //$arr[1]['2018-04-20']
-                //var_dump($arr[1]['2018-04-20']);
-                //die();
-
                 foreach ($results as $result) {
-                   // var_dump(intval($result['user_id'])===$user_id);
-                   // die();
+                   
                         if(intval($result['user_id'])===$user_id){
 
                             $productResult[$result['product_id']] += $result['quantity'] ;
@@ -1169,9 +1377,6 @@ class MobileService {
                         }
                     }
                         
-              //  }
-                // var_dump($productResult);
-               // die();
                 foreach (array_keys($productResult) as $product_id) {
                     $data[] = array('product_id' => $product_id,
                                     'quantity'=>$productResult[$product_id],
@@ -1188,6 +1393,46 @@ class MobileService {
         return $data;
     }
 
+
+ /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    
+     public function filterSurveyAndActivityPeriodeSumProduct($idAct,$userId,$startDate,$endDate){
+                
+        $results = $this->filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate);
+
+        $data =[];
+        $productResult = array();
+        $product_name = array();
+
+        foreach ($results as $result) {
+        $product_name[$result['product_id']] = $result['product_name'];
+        } 
+
+        foreach ($results as $result) {
+            $productResult[$result['product_id']]=0;
+        }
+
+        foreach ($results as $result) {
+            $productResult[$result['product_id']] += $result['quantity'] ;
+        }
+                
+        foreach (array_keys($productResult) as $product_id) {
+            $data[] = array('product_id' => $product_id,
+                            'quantity'=>$productResult[$product_id],
+                            'product_name' => $product_name[$product_id],                   
+                        );
+        }
+
+        return $data;
+        }
 
     public function initTableProductActivity($inArray){
         
