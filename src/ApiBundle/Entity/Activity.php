@@ -3,6 +3,7 @@
 namespace ApiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\MaxDepth;
 use JMS\Serializer\Annotation\Exclude ;

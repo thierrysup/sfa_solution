@@ -82,6 +82,8 @@ class User extends BaseUser
         return $this;
     }
  
+    
+
     /**
      * Get typeUser
      *
@@ -198,4 +200,28 @@ class User extends BaseUser
         return $idAreas;
     }
 
+
+    /**
+     * Get the value of phone
+     *
+     * @return  string
+     */ 
+    public function getPhone()
+    {
+        return $this->phone;
+    }
+
+    /**
+     * Set the value of phone
+     *
+     * @param  string  $phone
+     *
+     * @return  self
+     */ 
+    public function setPhone(string $phone)
+    {
+        $this->phone = $phone;
+
+        return $this;
+    }
 }

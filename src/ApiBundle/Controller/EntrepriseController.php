@@ -39,43 +39,7 @@ class EntrepriseController extends Controller
                 return $response;
     }
 
-    /**
-     * Lists all entreprise entities.
-     *
-     * @Route("/user/{id}", name="entreprise_user_index")
-     * @Method("GET")
-     */
-    public function findEnterpriseByUserIdAction($id)
-    {
-        $service = $this->get('logic_services');
-        $entreprises = $service->findEnterpriseByUserId($id);
-        $results=[];
-
-        foreach ($entreprises as $entreprise) {
-            $results[]=array(
-                'path' => $entreprise['name'],
-                'enterprise_id' => $entreprise['id_en'],
-                'currentUser_id' => $id,
-                'title' => strtoupper($entreprise['name']),
-                'ab' => strtoupper(substr($entreprise['name'],0,2)),
-            );
-        }
-
-        return new JsonResponse($results,Response::HTTP_OK);
-    }
-    /**
-     * find activities by enterprise for one user ...
-     *
-     * @Route("/{ent_id}/{user_id}", name="activities_enterprise_user_index")
-     * @Method("GET")
-     * @return void
-     */
-    public function findActivitiesByEnterpriseIdByUserIdAction($ent_id, $user_id) {
-        $service = $this->get('logic_services');
-        $listActivitiesDetail = $service->findActivitiesByEnterpriseIdByUserId($ent_id, $user_id);
-        return new JsonResponse($listActivitiesDetail,Response::HTTP_OK);
-    }
-
+    
     /**
      * Creates a new entreprise entity.
      *
@@ -189,5 +153,242 @@ class EntrepriseController extends Controller
       $response =  new JsonResponse('deleted successfully', Response::HTTP_OK);
       return $response;
     }
+
+
+
+    /**
+     *
+     *         Logic controlller inside one Custom Account
+     *  G Raport -D Report - DashBoard - Analyse - Manage -Mapping
+     *
+     */
+
+
+    /**
+     * Lists all entreprise entities.
+     *
+     * @Route("/user/{id}", name="entreprise_user_index")
+     * @Method("GET")
+     */
+    public function findEnterpriseByUserIdAction($id)
+    {
+        $service = $this->get('logic_services');
+        $entreprises = $service->findEnterpriseByUserId($id);
+        $results=[];
+
+        foreach ($entreprises as $entreprise) {
+            $results[]=array(
+                'path' => $entreprise['name'],
+                'enterprise_id' => $entreprise['id_en'],
+                'currentUser_id' => $id,
+                'title' => strtoupper($entreprise['name']),
+                'ab' => strtoupper(substr($entreprise['name'],0,2)),
+            );
+        }
+
+        return new JsonResponse($results,Response::HTTP_OK);
+    }
+    /**
+     * find activities by enterprise for one user ...
+     *
+     * @Route("/{ent_id}/{user_id}", name="activities_enterprise_user_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function findActivitiesByEnterpriseIdByUserIdAction($ent_id, $user_id) {
+        $service = $this->get('logic_services');
+        $listActivitiesDetail = $service->findActivitiesByEnterpriseIdByUserId($ent_id, $user_id);
+        return new JsonResponse($listActivitiesDetail,Response::HTTP_OK);
+    }
+
+    /**
+     * Details grouping by report function
+     *
+     *@Route("/sum/grouping/date/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}/{page}/{limit}", name="surveys_details_grouping_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function filterSurveyByUserAndActivityPeriodeSumGroupByDateServiceAction($id_act,$id_user,$start_date,$type_activity,$end_date,$page,$limit){
+        $service = $this->get('logic_services');
+        if (intval($type_activity) === 0) {
+
+            $listSurveys = $service->filterSurveyByUserAndActivityPeriodeSumGroupByDateService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        } else {
+            $listSurveys = $service->filterSurveyByUserAndActivityPeriodeSumGroupByDateProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+        /* var_dump($id_act.'-----'.$id_user.'-----'.$start_date.'-----'.$end_date.'-----'.$page.'-----'.$limi);
+        die(); */
+        return new Response($this->paginate($listSurveys,$page,$limit),Response::HTTP_OK);
+    }
+
+    /**
+     * global report function
+     *
+     *@Route("/sum/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}/{page}/{limit}", name="surveys_global_sum_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function filterSurveyByUserAndActivityPeriodeSumServiceAction($id_act,$id_user,$start_date,$end_date,$type_activity,$page,$limit){
+        $service = $this->get('logic_services');
+        
+        if (intval($type_activity) === 0) {
+            $listSurveys = $service->filterSurveyByUserAndActivityPeriodeSumService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }else{
+            $listSurveys = $service->filterSurveyByUserAndActivityPeriodeSumProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+
+        return new Response($this->paginate($listSurveys,$page,$limit),Response::HTTP_OK);;
+    }
+
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> $paginated->getCurrentPageNumber(),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => $limit,
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
+    }
+
+    /**
+     * global report function
+     *
+     *@Route("/dashBoard/town/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}", name="surveys_dashboard_town_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function getDashBoardTownAction($id_act,$id_user,$start_date,$end_date,$type_activity){
+        
+        $service = $this->get('logic_services');
+        if (intval($type_activity) === 0) {
+            $resumeDatas = $service->getDashBoardTownResumeDataService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }else{
+            $resumeDatas = $service->getDashBoardTownResumeDataProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize($resumeDatas, 'json');
+
+        return new Response($data,Response::HTTP_OK);
+    }
+
+     /**
+     * global report function
+     *
+     *@Route("/dashBoard/region/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}", name="surveys_dashboard_region_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function getDashBoardRegionAction($id_act,$id_user,$start_date,$end_date,$type_activity){
+        $service = $this->get('logic_services');
+        if (intval($type_activity) === 0) {
+            $resumeDatas = $service->getDashBoardRegionResumeDataService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }else{
+            $resumeDatas = $service->getDashBoardRegionResumeDataProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize($resumeDatas, 'json');
+
+        return new Response($data,Response::HTTP_OK);;
+    }
+     /**
+     * global report function
+     *
+     *@Route("/dashBoard/country/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}", name="surveys_dashboard_country_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function getDashBoardCountryAction($id_act,$id_user,$start_date,$end_date,$type_activity){
+        $service = $this->get('logic_services');
+        if (intval($type_activity) === 0) {
+            $resumeDatas = $service->getDashBoardCountryResumeDataService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }else{
+            $resumeDatas = $service->getDashBoardCountryResumeDataProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize($resumeDatas, 'json');
+
+        return new Response($data,Response::HTTP_OK);;
+    }
+     /**
+     * global report function
+     *
+     *@Route("/dashBoard/sector/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}", name="surveys_dashboard_sector_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function getDashBoardSectorAction($id_act,$id_user,$start_date,$end_date,$type_activity){
+        $service = $this->get('logic_services');
+        if (intval($type_activity) === 0) {
+            $resumeDatas = $service->getDashBoardSectorResumeDataService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }else{
+            $resumeDatas = $service->getDashBoardSectorResumeDataProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize($resumeDatas, 'json');
+
+        return new Response($data,Response::HTTP_OK);;
+    }
+     /**
+     * global report function
+     *
+     *@Route("/dashBoard/quarter/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}", name="surveys_dashboard_quarter_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function getDashBoardQuarterAction($id_act,$id_user,$start_date,$end_date,$type_activity){
+        $service = $this->get('logic_services');
+        if (intval($type_activity) === 0) {
+            $resumeDatas = $service->getDashBoardQuarterResumeDataService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }else{
+            $resumeDatas = $service->getDashBoardQuarterResumeDataProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize($resumeDatas, 'json');
+
+        return new Response($data,Response::HTTP_OK);;
+    }
+     /**
+     * global report function
+     *
+     *@Route("/dashBoard/basic/{id_act}/{id_user}/{start_date}/{end_date}/{type_activity}", name="surveys_dashboard_basic_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function getDashBoardBasicAction($id_act,$id_user,$start_date,$end_date,$type_activity){
+        $service = $this->get('logic_services');
+        if (intval($type_activity) === 0) {
+            $resumeDatas = $service->getDashBoardQuarterResumeDataService(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }else{
+            $resumeDatas = $service->getDashBoardPosResumeDataProduct(intval($id_act),intval($id_user),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+        }
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize($resumeDatas, 'json');
+
+        return new Response($data,Response::HTTP_OK);;
+    }
+
+
+
+
+
+
+
 
 }

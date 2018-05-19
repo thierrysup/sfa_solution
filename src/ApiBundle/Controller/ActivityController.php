@@ -24,6 +24,8 @@ class ActivityController extends Controller
      *
      * @Route("/", name="activity_index")
      * @Method("GET")
+     *
+     * @return Response
      */
     public function indexAction()
     {
@@ -34,7 +36,8 @@ class ActivityController extends Controller
                 $serializer = SerializerBuilder::create()->build();
                 $data = $serializer->serialize($activity, 'json');
 
-                $response =  new Response($data, Response::HTTP_OK);
+               // $response =  new Response($data, Response::HTTP_OK);
+               $response ="nous";
         return $response;
     }
 
