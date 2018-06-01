@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Po controller.
  *
- * @Route("pos")
+ * @Route("/pos")
  */
 class POSController extends Controller
 {
@@ -31,11 +31,47 @@ class POSController extends Controller
         
                 $pos = $em->getRepository('ApiBundle:POS')->findAll();
         
-                $serializer = SerializerBuilder::create()->build();
-                $pos = $serializer->serialize($pos, 'json');
+                 $serializer = SerializerBuilder::create()->build();
+                 $pos = $serializer->serialize($pos, 'json');
         
                 $response =  new Response($pos, Response::HTTP_OK);        
                 return $response;
+    }
+
+    /**
+     * Lists all pO entities.
+     *
+     * @Route("/page/{page}/{limit}", name="pos_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $pos = $em->getRepository('ApiBundle:POS')->findAll();
+        
+                $response =  new Response($this->paginate($pos,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -121,7 +157,7 @@ class POSController extends Controller
         // Save our pos
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
-
+      return  $response;
     }
 
     /**

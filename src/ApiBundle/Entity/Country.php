@@ -65,7 +65,7 @@ class Country
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Region", mappedBy="country",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Region>")
-     * @Exclude
+     * 
      */
     private $regions;
 

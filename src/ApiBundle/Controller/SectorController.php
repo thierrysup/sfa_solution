@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Sector controller.
  *
- * @Route("sector")
+ * @Route("/sector")
  */
 class SectorController extends Controller
 {
@@ -36,6 +36,42 @@ class SectorController extends Controller
         
                 $response =  new Response($sectors, Response::HTTP_OK);        
                 return $response;
+    }
+
+    /**
+     * Lists all sector entities.
+     *
+     * @Route("/page/{page}/{limit}", name="sector_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $sectors = $em->getRepository('ApiBundle:Sector')->findAll();
+        
+                $response =  new Response($this->paginate($sectors,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -120,7 +156,7 @@ class SectorController extends Controller
         // Save our sector
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
-
+      return  $response;
     }
 
     /**

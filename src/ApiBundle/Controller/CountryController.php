@@ -38,10 +38,49 @@ class CountryController extends Controller
     }
 
     /**
+     * Lists all country entities.
+     *
+     * @Route("/page/{page}/{limit}", name="country_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+
+        $countries = $em->getRepository('ApiBundle:Country')->findAll();
+
+       // $serializer = SerializerBuilder::create()->build();
+        // $countries = $serializer->serialize($countries, 'json');
+
+        $response =  new Response($this->paginate($countries,$page,$limit), Response::HTTP_OK);        
+        return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
+    }
+
+    /**
      * Creates a new country entity.
      *
      * @Route("/new", name="country_new")
-     * @Method({"GET", "POST"})
+     * @Method({"POST"})
      */
     public function newAction(Request $request)
     {
@@ -91,7 +130,7 @@ class CountryController extends Controller
      * Displays a form to edit an existing country entity.
      *
      * @Route("/{id}/edit", name="country_edit")
-     * @Method({"GET", "POST"})
+     * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
     {   

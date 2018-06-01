@@ -54,7 +54,7 @@ class Target
     /**
      * @var string
      *
-     * @ORM\Column(name="description", type="string", length=255)
+     * @ORM\Column(name="description",nullable=true, type="string", length=255)
      * @Type("string")
      */
     private $description;

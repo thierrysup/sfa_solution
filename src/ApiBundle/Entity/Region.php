@@ -77,7 +77,7 @@ class Region
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Town", mappedBy="region",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Town>")
      * @MaxDepth(1)
-     * @Exclude
+     * 
      */
     private $towns;
 

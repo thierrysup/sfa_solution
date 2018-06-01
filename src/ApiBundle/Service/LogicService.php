@@ -244,6 +244,56 @@ class LogicService {
     return $results;
     }
 
+
+        /**
+     * Give all detail survey whom had been pushed  
+     *
+     * @param [int] $idAct
+     * @return void
+     */
+    public function pointingResource($idAct,$startDate,$endDate){
+
+        $QUERY = 'SELECT tab2.username , COUNT(*) as present,tab2.phone
+                    FROM (SELECT DISTINCT survey.user_id , survey.date_submit
+                         FROM survey,product_survey ps,product p
+                         WHERE  survey.id = ps.survey_id
+                         AND ps.product_id = p.id
+                         AND p.activity_id = :idAct
+                         AND survey.status =1
+                         AND survey.date_submit BETWEEN CAST(:debut AS DATE) AND CAST(:fin AS DATE)
+                         GROUP BY survey.id,survey.date_submit) as tab1 ,(SELECT DISTINCT(u.id) , u.username ,u.phone
+                                            FROM user_manager um ,activity a,user u,activity_user ua
+                                            WHERE ua.user_id = u.id
+                                            AND ua.activity_id = :idAct
+                                            AND ua.mobility = 1
+                                            AND um.activity_id = ua.activity_id
+                                            AND u.id IN (SELECT user.id 
+                                                                            FROM  user 
+                                                                            WHERE  user.id  IN (SELECT Um.subordinate_id idu FROM user_manager Um WHERE Um.activity_id = :idAct )
+                                                                    )
+                                            AND u.id NOT IN (SELECT user.id 
+                                                                            FROM  user 
+                                                                            WHERE  user.id  IN (SELECT Um.manager_id idu FROM user_manager Um WHERE Um.activity_id = :idAct )
+                                                                    )
+                                            AND a.id = :idAct
+                                            AND u.enabled = 1
+                                            AND a.status = 1
+                                            AND ua.status = 1
+                                            AND um.status = 1) AS tab2
+                                            
+        WHERE tab1.user_id = tab2.id
+        GROUP BY tab1.user_id
+        ' ; 
+        $results = $this->em->getConnection()->prepare($QUERY);
+            $results->bindValue('idAct', $idAct);
+            $results->bindValue('fin', $endDate);
+            $results->bindValue('debut', $startDate);
+            $results->execute();
+        $results = $results->fetchAll();
+
+        return $results;
+    }
+
     public function getContentIds($idAct,$userId){
         $operationalResources = $this->findResourceOTerrainByActivityAndByManager($idAct,$userId);
         $ids=[];
@@ -362,6 +412,8 @@ class LogicService {
                                                     AND su.quarter_id = q.id
                                                     AND q.sector_id =s.id
                                                     AND s.id = au.sector_id
+                                                    AND p.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
@@ -403,6 +455,7 @@ class LogicService {
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.quantityIn IS NULL GROUP BY product_id,user_id,ps.date_submit
@@ -435,6 +488,7 @@ class LogicService {
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.quantityIn IS NULL 
@@ -471,6 +525,7 @@ class LogicService {
                                                     AND target.region_id = t.region_id
                                                     AND su.user_id = :idUser
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.quantityIn IS NULL 
@@ -556,6 +611,7 @@ class LogicService {
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.date_submit BETWEEN CAST(:debut AS DATE) AND CAST(:fin AS DATE)
@@ -596,12 +652,61 @@ class LogicService {
                                                     AND r.country_id = c.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.date_submit BETWEEN CAST(:debut AS DATE) AND CAST(:fin AS DATE)
                                                     AND ps.quantityIn IS NULL 
                                             
         ' ; 
+        $results = $this->em->getConnection()->prepare($QUERY);
+            $results->bindValue('idAct', $idAct);
+            $results->bindValue('fin', $endDate);
+            $results->bindValue('debut', $startDate);
+            $results->execute();
+        $results = $results->fetchAll();
+
+        return $results;
+    }
+
+
+
+
+    /**
+     * Give all detail survey whom had been pushed  
+     *
+     * @param [int] $idAct
+     * @return void
+     */
+    public function analyseDetailService($idAct,$startDate,$endDate){
+
+        $QUERY = 'SELECT u.username supervisor_name,tab1.*
+                    FROM user as u ,(SELECT DISTINCT target.product_id AS product_id,um.manager_id AS supervisor_id, p.name AS product_name ,ps.quantity AS quantity,
+                                    target.quantity AS quantity_target, ps.date_submit AS date_submit, user.phone AS phone,q.id quarter_id,q.name quarter_name,s.id sector_id,s.name sector_name,t.id town_id,t.name town_name,r.id region_id,
+                                       user.username As nameBa,ps.survey_id,su.user_id user_id,r.name region_name,c.id country_id,c.name country_name
+                                                    FROM target ,product p,product_survey ps,survey su,user_manager um,quarter q,activity_user au,sector s,town t,user,region r,country c
+                                                    WHERE su.id = ps.survey_id
+                                                    AND p.id = ps.product_id
+                                                    AND target.product_id =p.id
+                                                    AND su.user_id = au.user_id
+                                                    AND user.id = su.user_id
+                                                    AND su.quarter_id = q.id
+                                                    AND q.sector_id =s.id
+                                                    AND s.id = au.sector_id
+                                                    AND s.town_id = t.id
+                                                    AND t.region_id = r.id
+                                                    AND r.country_id = c.id
+                                                    AND target.region_id = t.region_id
+                                                    AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
+                                                    AND um.activity_id =au.activity_id
+                                                    AND um.subordinate_id = su.user_id
+                                                    AND target.start_date <= ps.date_submit
+                                                    AND target.end_date >= ps.date_submit
+                                                    AND ps.date_submit BETWEEN CAST(:debut AS DATE) AND CAST(:fin AS DATE)
+                                                    AND ps.quantityIn IS NULL) AS tab1 
+                                            
+        WHERE u.id = tab1.supervisor_id' ; 
         $results = $this->em->getConnection()->prepare($QUERY);
             $results->bindValue('idAct', $idAct);
             $results->bindValue('fin', $endDate);
@@ -630,7 +735,8 @@ class LogicService {
         die();  */
         $regionId = $user->getRegionId($idAct);
        
-        $results = $this->findDetailsSurveyByActivityIdPeriodeService($idAct,$startDate,$endDate);
+       // $results = $this->findDetailsSurveyByActivityIdPeriodeService($idAct,$startDate,$endDate); old use but deprecated
+       $results = $this->analyseDetailService($idAct,$startDate,$endDate);
         
         
         
@@ -812,7 +918,7 @@ class LogicService {
                                             'quantity_target'=> $targetResult[$product_id],
                                             'user_id'=> $user_id,
                                             'nameBa'=> $dtoResult[$user_id]->getUsername(),
-                                            'product_name'=> $productName[$product_id],                                    
+                                            'product_name'=> $productName[$product_id],
                                             'phone'=> $dtoResult[$user_id]->getPhone(),
                                         );
                         }
@@ -827,11 +933,326 @@ class LogicService {
     }
 
 
+    /**
+     * Diagramms Oriented Services for this Application  Start ++++++++++++++++++
+     */
+
+      /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    public function filterSurveyByUserAndActivityPeriodeSumDiagrammsService($idAct,$userId,$startDate,$endDate){
+        
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+       
+        $data =[];
+        $productResult = array();
+        $productName = array();
+
+          foreach ($results as $result) {
+            $productName[$result['product_id']] = $result['product_name'];
+            $productResult[$result['product_id']]=0;
+          } 
+
+                foreach ($results as $result) {
+                            $productResult[$result['product_id']] += intval($result['quantity']) ;
+                    }
+                        
+                //foreach (array_keys($productResult) as $product_id) {
+                    $data = array(
+                                    'quantity' => array_values($productResult),
+                                    'product_name' => array_values($productName)
+                                );
+               // }
+
+        return $data;
+    }
+
+    /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    
+    public function filterSurveyByUserAndActivityPeriodeSumGroupByDateDiagramsService($idAct,$userId,$startDate,$endDate){
+        
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+        $quantityResult = array();
+        $productResult = array();
+        $dateResult = array();  
+        $userResult = array();
+        $targetResult = array();
+
+        $dtoResult = array();
+        $productName = array();
+
+          foreach ($results as $result) {
+            $productName[$result['product_id']] = $result['product_name'];
+            $productResult[$result['product_id']]=0;
+            $dateResult[$result['date_submit']]=0;
+          } 
+          ksort($dateResult);
+
+                 $arr = array();
+                foreach (array_keys($productResult) as $product_id) {
+                    $arr[$product_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$product_id][$date_value] = 0;
+                    }
+                }  
+
+                foreach (array_keys($dateResult) as $date_value) {
+                    
+                            foreach ($results as $result) {
+                                    if($result['date_submit'] === $date_value){
+                                    $arr[$result['product_id']][$result['date_submit']]+= intval($result['quantity']);
+                                }
+                            }
+                    
+                    }
+             $data = array();
+            foreach (array_keys($productName) as $product_id) {
+                $data[] = array(
+                    'product' => $productName[$product_id],
+                    'quantity'=> array_values($arr[$product_id]),
+                );
+            }
+            
+        return array('products' => array_values($productName), 'date' => array_keys($dateResult), 'data' => $data);
+    }
+
+
+
+     /**
+      *  End Diagramms for this activity ...........
+      */
+
+
+
+     /**
+     * Now we must write a Global report analyse in one town for those user
+     * this report help some to take some strategic decision about those 
+     * activity and appreciate state situation of trade.
+     * 
+     */
+    public function getAnalyseResumeDataService($idAct,$userId,$startDate,$endDate){
+
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+        $dataResource =[];
+        $dataDate =[];
+
+        $supervisorArray = array();
+        $quantityResult = array();
+        $dateResult = array();
+        $targetResult = array();
+        $productName = array();
+        $dtoResult = array();
+        $date_list = array();
+
+          foreach ($results as $result) {
+            $supervisorArray[$result['supervisor_id']]= $result['supervisor_name'];
+            $productName[$result['product_id']] = $result['product_name'];
+            $date_list[$result['date_submit']]=0;
+          } 
+          ksort($date_list);
+           
+            foreach (array_keys($supervisorArray) as $supervisor_id) {
+                $resourceArray = array();
+                foreach ($results as $result) {
+                    if (intval($result['supervisor_id']) === $supervisor_id) {
+                        $resourceArray[$result['user_id']]=$result['nameBa'];
+                        $dtoResult[$result['user_id']] = new UserDto($result['nameBa'],$result['phone']);
+                    }
+                }
+
+                $dataResource =[];
+
+            foreach (array_keys($resourceArray) as $user_id) {
+
+                foreach ($results as $result) {
+                    $quantityResult[$result['product_id']]=0;
+                    $dateResult[$result['date_submit']]=0;
+                    ksort($dateResult);
+                }
+                $dataDate =[];
+                $arr = array();
+                foreach (array_keys($quantityResult) as $product_id) {
+                    $arr[$product_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$product_id][$date_value] = 0;
+                    }
+                } 
+
+                foreach (array_keys($dateResult) as $date_value) {
+
+                    foreach ($results as $result) {
+                        $quantityResult[$result['product_id']]=0;
+                        $targetResult[$result['product_id']]= 0 ;
+                    }
+                    
+                            foreach ($results as $result) {
+                                if((intval($result['user_id'])===$user_id)&&($result['date_submit'] === $date_value)&&(intval($result['supervisor_id']) === $supervisor_id)){
+
+                                    $quantityResult[$result['product_id']] += $result['quantity'] ;
+
+                                if($arr[$result['product_id']][$result['date_submit']]===0){
+                                        $targetResult[$result['product_id']] += $result['quantity_target'] ;
+                                    $arr[$result['product_id']][$result['date_submit']]=1;
+                                }
+                                }
+                            }
+
+                            $dataDate[] = array(
+                                            'quantity'=>array_values($quantityResult),
+                                            'date_submit'=>$date_value,
+                                            'quantity_target'=>array_values( $targetResult),
+                                           /* 'nameBa'=> $dtoResult[$user_id]->getUsername(),
+                                            'product_name'=> array_values($productName),
+                                            'phone'=> $dtoResult[$user_id]->getPhone(), */
+                                        ); 
+                    
+                    }
+
+                    $dataResource[]= array(
+                        'nameBa'=> $dtoResult[$user_id]->getUsername(),
+                        'phone'=> $dtoResult[$user_id]->getPhone(),
+                        'data_date' => $dataDate
+
+                    );
+
+                }
+
+                $data[]= array(
+                    'supervisor_name'=> $supervisorArray[$supervisor_id],
+                    'supervisor_id'=> $supervisor_id,
+                    'product' => array_values($productName),
+                    'date_list' =>  array_keys($date_list),
+                    'list_resource' => array_values($resourceArray),
+                    'data_resource' => $dataResource,
+                );
+            
+            }   
+
+        return $data;
+
+    }
+
+    /**
+     * Now we must write a Global report analyse in one town for those user
+     * this report help some to take some strategic decision about those 
+     * activity and appreciate state situation of trade.
+     * 
+     */
+    public function getAnalyseResumeDataServiceOld($idAct,$userId,$startDate,$endDate){
+
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+
+        $supervisorArray = array();
+        $quantityResult = array();
+        $dateResult = array();
+        $targetResult = array();
+        $productName = array();
+        $dtoResult = array();
+
+          foreach ($results as $result) {
+            $supervisorArray[$result['supervisor_id']]= $result['supervisor_name'];
+            $productName[$result['product_id']] = $result['product_name'];
+          } 
+           
+            foreach (array_keys($supervisorArray) as $supervisor_id) {
+                $resourceArray = array();
+                foreach ($results as $result) {
+                    if (intval($result['supervisor_id']) === $supervisor_id) {
+                        $resourceArray[$result['user_id']]=$result['nameBa'];
+                        $dtoResult[$result['user_id']] = new UserDto($result['nameBa'],$result['phone']);
+                    }
+                    
+                }
+
+                $dataUser =[];
+
+            foreach (array_keys($resourceArray) as $user_id) {
+
+                foreach ($results as $result) {
+                    $quantityResult[$result['product_id']]=0;
+                    $dateResult[$result['date_submit']]=0;
+                    ksort($dateResult);
+                }
+               
+                $arr = array();
+                foreach (array_keys($quantityResult) as $product_id) {
+                    $arr[$product_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$product_id][$date_value] = 0;
+                    }
+                } 
+
+                foreach (array_keys($dateResult) as $date_value) {
+
+                    foreach ($results as $result) {
+                        $quantityResult[$result['product_id']]=0;
+                        $targetResult[$result['product_id']]= 0 ;
+                    }
+                    
+                            foreach ($results as $result) {
+                                if((intval($result['user_id'])===$user_id)&&($result['date_submit'] === $date_value)&&(intval($result['supervisor_id']) === $supervisor_id)){
+
+                                    $quantityResult[$result['product_id']] += $result['quantity'] ;
+
+                                if($arr[$result['product_id']][$result['date_submit']]===0){
+                                        $targetResult[$result['product_id']] += $result['quantity_target'] ;
+                                    $arr[$result['product_id']][$result['date_submit']]=1;
+                                }
+                                }
+                            }
+
+                            $data[] = array(
+                                            'supervisor_id'=>$supervisor_id,
+                                            'supervisor_name'=> $supervisorArray[$supervisor_id],
+                                            'quantity'=>array_values($quantityResult),
+                                            'date_submit'=>$date_value,
+                                            'quantity_target'=>array_values( $targetResult),
+                                            'user_id'=> $user_id,
+                                            'nameBa'=> $dtoResult[$user_id]->getUsername(),
+                                            'product_name'=> array_values($productName),
+                                            'phone'=> $dtoResult[$user_id]->getPhone(),
+                                        ); 
+                    
+                    }
+
+                }
+            
+            }   
+
+        return $data;
+
+    }
+
+
+
+
     public function initTableService($inArray){
         
         return array('product_id' => $inArray['product_id'],
                         'region_id'=> $inArray['region_id'],
                         'quarter_id'=> $inArray['quarter_id'],
+                        'supervisor_id'=> $inArray['supervisor_id'],
+                        'supervisor_name'=> $inArray['supervisor_name'],
                         'survey_id'=> $inArray['survey_id'] ,
                         'quantity'=> $inArray['quantity'],
                         'quantity_target'=> $inArray['quantity_target'],
@@ -881,6 +1302,9 @@ class LogicService {
         
         return $data;
     }
+
+
+    
 
     /**
      * Now we must write a Global report analyse in one town for those user
@@ -1247,6 +1671,7 @@ class LogicService {
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.quantityIn IS NOT NULL) AS tab1
@@ -1286,6 +1711,7 @@ class LogicService {
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.quantityIn IS NOT NULL GROUP BY product_id,user_id
@@ -1319,6 +1745,7 @@ class LogicService {
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.quantityIn IS NOT NULL 
@@ -1353,6 +1780,7 @@ class LogicService {
                                                     AND s.town_id = t.id
                                                     AND target.region_id = t.region_id
                                                     AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
                                                     AND target.start_date <= ps.date_submit
                                                     AND target.end_date >= ps.date_submit
                                                     AND ps.quantityIn IS NOT NULL 
@@ -1434,6 +1862,7 @@ class LogicService {
                                     AND t.region_id = r.id
                                     AND r.country_id = c.id
                                     AND target.region_id = t.region_id
+                                    AND p.activity_id = :idAct
                                     AND au.activity_id = :idAct
                                     AND target.start_date <= ps.date_submit
                                     AND target.end_date >= ps.date_submit
@@ -1449,6 +1878,52 @@ class LogicService {
         
                 return $results;
             }
+    /**
+     * Give all detail survey whom had been pushed
+     *
+     * @param [int] $idAct
+     * @return void
+     */
+    public function analyseDetailProduct($idAct,$startDate,$endDate){
+
+        $QUERY = 'SELECT u.username supervisor_name,tab1.*
+                    FROM user as u ,(SELECT DISTINCT target.product_id AS product_id,um.manager_id AS supervisor_id,ps.quantityIn AS quantity_in, p.name AS product_name ,ps.quantity AS quantity,
+                                    target.quantity AS quantity_target, ps.date_submit AS date_submit, user.phone AS phone,q.id quarter_id,q.name quarter_name,s.id sector_id,s.name sector_name,t.id town_id,t.name town_name,r.id region_id,
+                                       user.username As nameBa,ps.survey_id,su.user_id user_id,r.name region_name,c.id country_id,c.name country_name
+                                                    FROM target ,product p,product_survey ps,survey su,p_o_s pos,user_manager um,quarter q,activity_user au,sector s,town t,user,region r,country c
+                                                    WHERE su.id = ps.survey_id
+                                                    AND p.id = ps.product_id
+                                                    AND target.product_id =p.id
+                                                    AND su.user_id = au.user_id
+                                                    AND user.id = su.user_id
+                                                    AND su.pos_id = pos.id
+                                                    AND pos.quarter_id = q.id
+                                                    AND q.sector_id =s.id
+                                                    AND s.id = au.sector_id
+                                                    AND s.town_id = t.id
+                                                    AND t.region_id = r.id
+                                                    AND r.country_id = c.id
+                                                    AND target.region_id = t.region_id
+                                                    AND au.activity_id = :idAct
+                                                    AND p.activity_id = :idAct
+                                                    AND um.activity_id =au.activity_id
+                                                    AND um.subordinate_id = su.user_id
+                                                    AND target.start_date <= ps.date_submit
+                                                    AND target.end_date >= ps.date_submit
+                                                    AND ps.date_submit BETWEEN CAST(:debut AS DATE) AND CAST(:fin AS DATE)
+                                                    AND ps.quantityIn IS NOT NULL) AS tab1 
+                                            
+        WHERE u.id = tab1.supervisor_id' ; 
+        $results = $this->em->getConnection()->prepare($QUERY);
+            $results->bindValue('idAct', $idAct);
+            $results->bindValue('fin', $endDate);
+            $results->bindValue('debut', $startDate);
+            $results->execute();
+        $results = $results->fetchAll();
+
+        return $results;
+    }
+
 
 
     /**
@@ -1464,7 +1939,8 @@ class LogicService {
      public function filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate){
         $user = $this->em->getRepository('AppBundle:User')->find($userId);
         $regionId = $user->getRegionId($idAct);
-        $results = $this->findDetailsSurveyByActivityIdPeriodeProduct($idAct,$startDate,$endDate);
+       // $results = $this->findDetailsSurveyByActivityIdPeriodeProduct($idAct,$startDate,$endDate); // deprecated  ...
+        $results = $this->analyseDetailProduct($idAct,$startDate,$endDate);
 
         $data =[];
         
@@ -1616,7 +2092,7 @@ class LogicService {
           foreach ($results as $result) {
             $userResult[$result['user_id']]=0;
             $dtoResult[$result['user_id']] = new UserDto($result['nameBa'],$result['phone']);
-            $quantityInResult[$result['product_id']] = 0;
+            //$quantityInResult[$result['product_id']] = 0;
             $productName[$result['product_id']] = $result['product_name'];
           } 
 
@@ -1640,6 +2116,7 @@ class LogicService {
                     foreach ($results as $result) {
                         $quantityResult[$result['product_id']]=0;
                         $targetResult[$result['product_id']]= 0 ;
+                        $quantityInResult[$result['product_id']] = 0;
                     }
                     
                             foreach ($results as $result) {
@@ -1679,12 +2156,243 @@ class LogicService {
 
 
 
+      /**
+     * Now we must write a Global report analyse in one town for those user
+     * this report help some to take some strategic decision about those 
+     * activity and appreciate state situation of trade.
+     * 
+     */
+    public function getAnalyseResumeDataProduct($idAct,$userId,$startDate,$endDate){
+
+        $results = $this->filterSurveyByUserAndActivityPeriodeService($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+        $dataResource =[];
+        $dataDate =[];
+
+        $supervisorArray = array();
+        $quantityResult = array();
+        $dateResult = array();
+        $quantityInResult = array();
+        $targetResult = array();
+        $productName = array();
+        $dtoResult = array();
+        $date_list = array();
+
+          foreach ($results as $result) {
+            $supervisorArray[$result['supervisor_id']]= $result['supervisor_name'];
+            $productName[$result['product_id']] = $result['product_name'];
+            $date_list[$result['date_submit']]=0;
+          } 
+          ksort($date_list);
+           
+            foreach (array_keys($supervisorArray) as $supervisor_id) {
+                $resourceArray = array();
+                foreach ($results as $result) {
+                    if (intval($result['supervisor_id']) === $supervisor_id) {
+                        $resourceArray[$result['user_id']]=$result['nameBa'];
+                        $dtoResult[$result['user_id']] = new UserDto($result['nameBa'],$result['phone']);
+                    }
+                }
+
+                $dataResource =[];
+
+            foreach (array_keys($resourceArray) as $user_id) {
+
+                foreach ($results as $result) {
+                    $quantityResult[$result['product_id']]=0;
+                    $dateResult[$result['date_submit']]=0;
+                    ksort($dateResult);
+                }
+                $dataDate =[];
+                $arr = array();
+                foreach (array_keys($quantityResult) as $product_id) {
+                    $arr[$product_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$product_id][$date_value] = 0;
+                    }
+                } 
+
+                foreach (array_keys($dateResult) as $date_value) {
+
+                    foreach ($results as $result) {
+                        $quantityResult[$result['product_id']]=0;
+                        $targetResult[$result['product_id']]= 0 ;
+                        $quantityInResult[$result['product_id']] = 0;
+                    }
+                    
+                            foreach ($results as $result) {
+                                if((intval($result['user_id'])===$user_id)&&($result['date_submit'] === $date_value)&&(intval($result['supervisor_id']) === $supervisor_id)){
+
+                                    $quantityResult[$result['product_id']] += $result['quantity'] ;
+
+                                if($arr[$result['product_id']][$result['date_submit']]===0){
+                                        $targetResult[$result['product_id']] += intval($result['quantity_target']) ;
+                                        $quantityInResult[$result['product_id']] += intval($result['quantity_in']);
+                                    $arr[$result['product_id']][$result['date_submit']]=1;
+                                }
+                                }
+                            }
+
+                            $dataDate[] = array(
+                                            'quantity'=>array_values($quantityResult),
+                                            'date_submit'=>$date_value,
+                                            'quantity_target'=>array_values( $targetResult),
+                                            'quantity_in'=>array_values($quantityInResult),
+                                           /* 'nameBa'=> $dtoResult[$user_id]->getUsername(),
+                                            'product_name'=> array_values($productName),
+                                            'phone'=> $dtoResult[$user_id]->getPhone(), */
+                                        ); 
+                    
+                    }
+
+                    $dataResource[]= array(
+                        'nameBa'=> $dtoResult[$user_id]->getUsername(),
+                        'phone'=> $dtoResult[$user_id]->getPhone(),
+                        'data_date' => $dataDate
+
+                    );
+
+                }
+
+                $data[]= array(
+                    'supervisor_name'=> $supervisorArray[$supervisor_id],
+                    'supervisor_id'=> $supervisor_id,
+                    'product' => array_values($productName),
+                    'list_resource' => array_values($resourceArray),
+                    'date_list' =>  array_keys($date_list),
+                    'data_resource' => $dataResource
+                );
+            
+            }   
+
+        return $data;
+
+
+
+
+
+
+
+
+    }
+
+
+    /**
+     * Diagramms Oriented Product for this Application  Start ++++++++++++++++++
+     */
+
+      /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    public function filterSurveyByUserAndActivityPeriodeSumDiagrammsProduct($idAct,$userId,$startDate,$endDate){
+        
+        $results = $this->filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate);
+       
+        $data =[];
+        $productResult = array();
+        $productName = array();
+
+          foreach ($results as $result) {
+            $productName[$result['product_id']] = $result['product_name'];
+            $productResult[$result['product_id']]=0;
+          } 
+
+                foreach ($results as $result) {
+                            $productResult[$result['product_id']] += intval($result['quantity']) ;
+                    }
+                        
+                //foreach (array_keys($productResult) as $product_id) {
+                    $data = array(
+                                    'quantity' => array_values($productResult),
+                                    'product_name' => array_values($productName)
+                                );
+               // }
+
+        return $data;
+    }
+
+    /**
+     * Give all survey relative by influence area of this login user for one activity on a period
+     *
+     * @param [int] $idAct
+     * @param [int] $user
+     * @param [date] $startDate
+     * @param [date] $endDate
+     * @return void
+     */
+    
+    public function filterSurveyByUserAndActivityPeriodeSumGroupByDateDiagramsProduct($idAct,$userId,$startDate,$endDate){
+        
+        $results = $this->filterSurveyByUserAndActivityPeriodeProduct($idAct,$userId,$startDate,$endDate);
+        
+        $data =[];
+        $quantityResult = array();
+        $productResult = array();
+        $dateResult = array();  
+        $userResult = array();
+        $targetResult = array();
+
+        $dtoResult = array();
+        $productName = array();
+
+          foreach ($results as $result) {
+            $productName[$result['product_id']] = $result['product_name'];
+            $productResult[$result['product_id']]=0;
+            $dateResult[$result['date_submit']]=0;
+          } 
+          ksort($dateResult);
+
+                 $arr = array();
+                foreach (array_keys($productResult) as $product_id) {
+                    $arr[$product_id] = array();
+                    foreach (array_keys($dateResult) as $date_value) {
+                        $arr[$product_id][$date_value] = 0;
+                    }
+                }  
+
+                foreach (array_keys($dateResult) as $date_value) {
+                    
+                            foreach ($results as $result) {
+                                    if($result['date_submit'] === $date_value){
+                                    $arr[$result['product_id']][$result['date_submit']]+= intval($result['quantity']);
+                                }
+                            }
+                    
+                    }
+             $data = array();
+            foreach (array_keys($productName) as $product_id) {
+                $data[] = array(
+                    'product' => $productName[$product_id],
+                    'quantity'=> array_values($arr[$product_id]),
+                );
+            }
+            
+        return array('products' => array_values($productName), 'date' => array_keys($dateResult), 'data' => $data);
+    }
+
+
+
+     /**
+      *  End Diagramms for this activity ...........
+      */
+
+
+
     public function initTableProductActivity($inArray){
         
         return array('product_id' => $inArray['product_id'],
                         'region_id'=> $inArray['region_id'],
                         'pos_id'=> $inArray['pos_id'],
                         'pos_name'=> $inArray['pos_name'],
+                        'supervisor_id'=> $inArray['supervisor_id'],
+                        'supervisor_name'=> $inArray['supervisor_name'],
                         'survey_id'=> $inArray['survey_id'] ,
                         'quantity'=> $inArray['quantity'],
                         'quantity_target'=> $inArray['quantity_target'],
@@ -1736,6 +2444,7 @@ class LogicService {
                 foreach ($results as $result) {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
+                    $quantityInResult[$result['product_id']]= 0 ;
                     $dateResult[$result['date_submit']]=0;
                 }
                
@@ -1804,6 +2513,7 @@ class LogicService {
                 foreach ($results as $result) {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
+                    $quantityInResult[$result['product_id']]= 0 ;
                     $dateResult[$result['date_submit']]=0;
                 }
                
@@ -1872,6 +2582,7 @@ class LogicService {
                 foreach ($results as $result) {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
+                    $quantityInResult[$result['product_id']]= 0 ;
                     $dateResult[$result['date_submit']]=0;
                 }
                
@@ -1940,6 +2651,7 @@ class LogicService {
                 foreach ($results as $result) {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
+                    $quantityInResult[$result['product_id']]= 0 ;
                     $dateResult[$result['date_submit']]=0;
                 }
                
@@ -2008,6 +2720,7 @@ class LogicService {
                 foreach ($results as $result) {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
+                    $quantityInResult[$result['product_id']]= 0 ;
                     $dateResult[$result['date_submit']]=0;
                 }
                
@@ -2076,6 +2789,7 @@ class LogicService {
                 foreach ($results as $result) {
                     $productResult[$result['product_id']]=0;
                     $targetResult[$result['product_id']]= 0 ;
+                    $quantityInResult[$result['product_id']]= 0 ;
                     $dateResult[$result['date_submit']]=0;
                 }
                

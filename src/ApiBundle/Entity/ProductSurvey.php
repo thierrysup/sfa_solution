@@ -245,4 +245,28 @@ class ProductSurvey
     {
         return $this->survey;
     }
+
+    /**
+     * Get the value of baseline
+     *
+     * @return  bool
+     */ 
+    public function getBaseline()
+    {
+        return $this->baseline;
+    }
+
+    /**
+     * Set the value of baseline
+     *
+     * @param  bool  $baseline
+     *
+     * @return  self
+     */ 
+    public function setBaseline(bool $baseline)
+    {
+        $this->baseline = $baseline;
+
+        return $this;
+    }
 }

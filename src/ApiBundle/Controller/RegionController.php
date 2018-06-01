@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Region controller.
  *
- * @Route("region")
+ * @Route("/region")
  */
 class RegionController extends Controller
 {
@@ -36,6 +36,42 @@ class RegionController extends Controller
         
                 $response =  new Response($regions, Response::HTTP_OK);        
                 return $response;
+    }
+
+     /**
+     * Lists all region entities.
+     *
+     * @Route("/page/{page}/{limit}", name="region_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $regions = $em->getRepository('ApiBundle:Region')->findAll();
+        
+                $response =  new Response($this->paginate($regions,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -113,13 +149,14 @@ class RegionController extends Controller
         $region->setName($entity->getName());
         $region->setDescription($entity->getDescription()); 
         $region->setStatus($entity->getStatus());
-        $region->setContry($this->getDoctrine()
+        $region->setCountry($this->getDoctrine()
         ->getRepository('ApiBundle:Country')
         ->findOneBy(['id' => $entity->getCountry()->getId()]));
         
         // Save our article
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
+         return  $response;
     }
 
     /**

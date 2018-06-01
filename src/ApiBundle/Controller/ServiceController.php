@@ -50,7 +50,7 @@ class ServiceController extends Controller
          $sector = 3;
          $debut = '2018-04-1';
          $fin = '2018-04-30';
-        return new JsonResponse($service->getDashBoardTownResumeDataService($act,$user,$debut,$fin,5));
+        return new JsonResponse($service->pointingResource($act,$debut,$fin));
      } 
 
 }

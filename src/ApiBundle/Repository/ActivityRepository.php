@@ -2,6 +2,8 @@
 
 namespace ApiBundle\Repository;
 
+use Doctrine\ORM\EntityRepository;
+
 /**
  * ActivityRepository
  *
@@ -10,4 +12,12 @@ namespace ApiBundle\Repository;
  */
 class ActivityRepository extends \Doctrine\ORM\EntityRepository
 {
+
+    public function search($keyword) {
+        $qb = $this->createQueryBuilder('a');
+
+            $qb->andWhere('a.name like :keyword or concat(a.type_activity,"")  like :keyword or concat(a.startDate,"") like :keyword or concat(a.endDate,"") like :keyword')
+                ->setParameter('keyword', '%'.$keyword.'%');
+       return $qb->getQuery();
+    }
 }

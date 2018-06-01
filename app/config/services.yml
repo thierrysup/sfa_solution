@@ -13,3 +13,7 @@ services:
     logic_services:
         class: ApiBundle\Service\LogicService
         arguments: [ "@doctrine.orm.entity_manager" ]
+    
+    search_services:
+        class: ApiBundle\Service\SearchService
+        arguments: [ "@doctrine.orm.entity_manager" ]

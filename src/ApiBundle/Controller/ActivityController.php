@@ -33,12 +33,68 @@ class ActivityController extends Controller
         
                 $activity = $em->getRepository('ApiBundle:Activity')->findAll();
 
-                $serializer = SerializerBuilder::create()->build();
-                $data = $serializer->serialize($activity, 'json');
+                 $serializer = SerializerBuilder::create()->build();
+                 $data = $serializer->serialize($activity, 'json');
 
-               // $response =  new Response($data, Response::HTTP_OK);
-               $response ="nous";
-        return $response;
+                $response =  new Response($data, Response::HTTP_OK);
+            return $response;
+    }
+
+    /**
+     * Lists all activity entities.
+     *
+     * @Route("/page/{page}/{limit}", name="activity_page_index")
+     * @Method("GET")
+     *
+     * @return Response
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $activity = $em->getRepository('ApiBundle:Activity')->findAll();
+
+                 //$serializer = SerializerBuilder::create()->build();
+                 //$data = $serializer->serialize($activity, 'json');
+
+                $response =  new Response($this->paginate($activity,$page,$limit), Response::HTTP_OK);
+            return $response;
+    }
+
+    /**
+     * Lists all activity entities.
+     *
+     * @Route("/search/{search}/{page}/{limit}", name="activity_search_index")
+     * @Method("GET")
+     *
+     * @return JsonResponse
+     */
+    public function searchAction($search,$page,$limit)
+    {
+        $service = $this->get('search_services');
+        $results = $service->searchActivity($search);
+                $response =  new Response($this->paginate($results,$page,$limit), Response::HTTP_OK);
+            return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -52,9 +108,13 @@ class ActivityController extends Controller
         
         $data = $request->getContent();
         
+
+         // $activity= new Activity();
+
+        
         $serializer = SerializerBuilder::create()->build();
         $activity = $serializer->deserialize($data,'ApiBundle\Entity\Activity', 'json');
-        
+
         // Get the Doctrine service and manager
         $em = $this->getDoctrine()->getManager();
         $activity->setEntreprise($this->getDoctrine()
@@ -117,7 +177,7 @@ class ActivityController extends Controller
         $activity->setName($entity->getName());
         $activity->setStartDate($entity->getStartDate()); 
         $activity->setEndDate($entity->getEndDate());
-        $activity->setType_activity($entity->getType_activity());
+        $activity->setTypeActivity($entity->getTypeActivity());
         $activity->setStatus($entity->getStatus());
         $activity->setEntreprise($this->getDoctrine()
         ->getRepository('ApiBundle:Entreprise')
@@ -127,7 +187,7 @@ class ActivityController extends Controller
         // Save our activity
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
-
+          return $response;
     }
 
     /**

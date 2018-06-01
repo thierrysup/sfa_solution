@@ -16,7 +16,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Usermanager controller.
  *
- * @Route("usermanager")
+ * @Route("/usermanager")
  */
 class UserManagerController extends Controller
 {
@@ -37,6 +37,48 @@ class UserManagerController extends Controller
         
         $response =  new Response($userManagers, Response::HTTP_OK);
         return $response;
+    }
+
+
+    /**
+     * Lists all activity entities.
+     *
+     * @Route("/page/{page}/{limit}", name="usermanager_page_index")
+     * @Method("GET")
+     *
+     * @return Response
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $user = $em->getRepository('AppBundle:UserManager')->findAll();
+
+                 //$serializer = SerializerBuilder::create()->build();
+                 //$data = $serializer->serialize($activity, 'json');
+
+                $response =  new Response($this->paginate($user,$page,$limit), Response::HTTP_OK);
+            return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -62,7 +104,7 @@ class UserManagerController extends Controller
         ->findOneBy(['id' => $userManager->getSubordinate()->getId()]));
 
         $userManager->setActivity($this->getDoctrine()
-        ->getRepository('ApiBundle:User')
+        ->getRepository('ApiBundle:Activity')
         ->findOneBy(['id' => $userManager->getActivity()->getId()]));
     
         // Add our quote to Doctrine so that it can be saved
@@ -118,13 +160,13 @@ class UserManagerController extends Controller
 
         //now we want to deserialize data request to article object ...
         $serializer = SerializerBuilder::create()->build();
-        $entity = $serializer->deserialize($data,'AppBundle\Entity\UserManger', 'json');
+        $entity = $serializer->deserialize($data,'AppBundle\Entity\UserManager', 'json');
         // Get the Doctrine service and manager
         $em = $this->getDoctrine()->getManager();
         
         $userManager->setManager($this->getDoctrine()
         ->getRepository('AppBundle:User')
-        ->findOneBy(['id' => $entity->getUserManager()->getId()]));
+        ->findOneBy(['id' => $entity->getManager()->getId()]));
 
         $userManager->setSubordinate($this->getDoctrine()
         ->getRepository('AppBundle:User')
