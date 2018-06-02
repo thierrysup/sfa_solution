@@ -32,7 +32,7 @@ class ProductSurveyController extends Controller
         $em = $this->getDoctrine()->getManager();
         
                 $productSurvey = $em->getRepository('ApiBundle:ProductSurvey')->findAll();
-        
+        //
                 $serializer = SerializerBuilder::create()->build();
                 $productSurvey = $serializer->serialize($productSurvey, 'json');
         
@@ -55,7 +55,8 @@ class ProductSurveyController extends Controller
         
         $serializer = SerializerBuilder::create()->build();
         $productSurvey = $serializer->deserialize($data,'ApiBundle\Entity\ProductSurvey', 'json');
-        
+       // var_dump($productSurvey);
+       // die();
         // Get the Doctrine service and manager
         $em = $this->getDoctrine()->getManager();
         $productSurvey->setProduct($this->getDoctrine()
@@ -116,13 +117,16 @@ class ProductSurveyController extends Controller
         //now we want to deserialize data request to productSurvey object ...
         $serializer = SerializerBuilder::create()->build();
         $entity = $serializer->deserialize($data,'ApiBundle\Entity\ProductSurvey', 'json');
+        //var_dump($entity);
+        //die();
         // Get the Doctrine service and manager
         $em = $this->getDoctrine()->getManager();
-        
         $productSurvey->setQuantity($entity->getQuantity());
         $productSurvey->setDateSubmit($entity->getDateSubmit()); 
         $productSurvey->setQuantityIn($entity->getQuantityIn());
         $productSurvey->setStatus($entity->getStatus());
+        $productSurvey->setCommit($entity->getCommit());  
+        //$productSurvey->setBaseline($entity->getBaseline());
         $productSurvey->setProduct($this->getDoctrine()
         ->getRepository('ApiBundle:Product')
         ->findOneBy(['id' => $entity->getProduct()->getId()]));
@@ -134,7 +138,7 @@ class ProductSurveyController extends Controller
         // Save our productSurvey
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
-
+        return $response;
     }
 
     /**

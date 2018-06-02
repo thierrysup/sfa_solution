@@ -60,6 +60,14 @@ class ProductSurvey
     private $quantityIn;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="commit", type="string", length=255, nullable=true)
+     * @Type("string")
+     */
+    private $commit;
+
+    /**
      * @var bool
      *
      * @ORM\Column(name="status", type="boolean")
@@ -175,6 +183,31 @@ class ProductSurvey
     }
 
     /**
+     * Set commit
+     *
+     * @param string $commit
+     *
+     * @return Survey
+     */
+    public function setCommit($commit)
+    {
+        $this->commit = $commit;
+
+        return $this;
+    }
+
+    /**
+     * Get commit
+     *
+     * @return string
+     */
+    public function getCommit()
+    {
+        return $this->commit;
+    }
+
+
+    /**
      * Set status
      *
      * @param boolean $status
@@ -244,5 +277,29 @@ class ProductSurvey
     public function getSurvey()
     {
         return $this->survey;
+    }
+
+    /**
+     * Get the value of baseline
+     *
+     * @return  bool
+     */ 
+    public function getBaseline()
+    {
+        return $this->baseline;
+    }
+
+    /**
+     * Set the value of baseline
+     *
+     * @param  bool  $baseline
+     *
+     * @return  self
+     */ 
+    public function setBaseline(bool $baseline)
+    {
+        $this->baseline = $baseline;
+
+        return $this;
     }
 }

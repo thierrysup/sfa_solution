@@ -49,23 +49,33 @@ class SurveyController extends Controller
         $data = $request->getContent();
         
         $serializer = SerializerBuilder::create()->build();
-        $Survey = $serializer->deserialize($data,'ApiBundle\Entity\Survey', 'json');
+        $entity = $serializer->deserialize($data,'ApiBundle\Entity\Survey', 'json');
+
         
-        // Get the Doctrine service and manager
         $em = $this->getDoctrine()->getManager();
-        $survey->setQuarter($this->getDoctrine()
+       // $entity->setDateSubmit(date('y-m-d', strtotime($data['date_submit'])));
+        if ($entity->getQuarter() !== NULL) {
+            $entity->setQuarter($this->getDoctrine()
         ->getRepository('ApiBundle:Quarter')
         ->findOneBy(['id' => $entity->getQuarter()->getId()]));
-        $survey->setPos($this->getDoctrine()
-        ->getRepository('ApiBundle:POS')
-        ->findOneBy(['id' => $entity->getPos()->getId()]));
+        } else {
+            $entity->setPos($this->getDoctrine()
+            ->getRepository('ApiBundle:POS')
+            ->findOneBy(['id' => $entity->getPos()->getId()]));
+        }
+        
+        $entity->setUser($this->getDoctrine()
+        ->getRepository('AppBundle:User')
+        ->findOneBy(['id' => $entity->getUser()->getId()]));
+        //var_dump($entity);
+        //die();
 
         // Add our quote to Doctrine so that it can be saved
-        $em->persist($survey);
+        $em->persist($entity);
     
         // Save our Survey
         $em->flush();
-     $response =  new JsonResponse($survey, Response::HTTP_OK);
+     $response =  new JsonResponse(array('id' => $entity->getId()), Response::HTTP_OK);
      
      return $response;
     }

@@ -39,7 +39,7 @@ class Survey
     /**
      * @var string
      *
-     * @ORM\Column(name="commit", type="string", length=255)
+     * @ORM\Column(name="commit", type="string", length=255, nullable=true)
      * @Type("string")
      */
     private $commit;
@@ -47,7 +47,7 @@ class Survey
     /**
      * @var string
      *
-     * @ORM\Column(name="actor_name", type="string", length=255)
+     * @ORM\Column(name="actor_name", type="string", length=255, nullable=true)
      * @Type("string")
      */
     private $actorName;
@@ -55,7 +55,7 @@ class Survey
     /**
      * @var string
      *
-     * @ORM\Column(name="actor_phone", type="string", length=255)
+     * @ORM\Column(name="actor_phone", type="string", length=255, nullable=true)
      * @Type("string")
      */
     private $actorPhone;
@@ -97,8 +97,8 @@ class Survey
     /**
      * @var Quarter The quarter this survey is about.
      *
-     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Quarter", inversedBy="surveys",cascade={"persist"})
-     * @ORM\JoinColumn(name="quarter_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\Quarter", inversedBy="surveys")
+     * @ORM\JoinColumn(name="quarter_id", referencedColumnName="id",nullable=true)
      * @Type("ApiBundle\Entity\Quarter")
      * @MaxDepth(1)
      */
@@ -118,7 +118,7 @@ class Survey
      * @var POS The pos this pos is about.
      *
      * @ORM\ManyToOne(targetEntity="ApiBundle\Entity\POS", inversedBy="surveys",cascade={"persist"})
-     * @ORM\JoinColumn(name="pos_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
+     * @ORM\JoinColumn(name="pos_id", referencedColumnName="id",nullable=true)
      * @Type("ApiBundle\Entity\POS")
      * @MaxDepth(1)
      */
@@ -365,6 +365,30 @@ class Survey
     public function getQuarter()
     {
         return $this->quarter;
+    }
+
+     /**
+     * Set User
+     *
+     * @param \AppBundle\Entity\User $user
+     *
+     * @return User
+     */
+    public function setUser(\AppBundle\Entity\User $user = null)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * Get user
+     *
+     * @return \AppBundle\Entity\User
+     */
+    public function getUser()
+    {
+        return $this->user;
     }
 
     /**

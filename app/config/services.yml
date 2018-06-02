@@ -13,3 +13,8 @@ services:
     logic_services:
         class: ApiBundle\Service\LogicService
         arguments: [ "@doctrine.orm.entity_manager" ]
+
+
+    mobile_services:
+        class: ApiBundle\Service\MobileService
+        arguments: [ "@doctrine.orm.entity_manager" ]
