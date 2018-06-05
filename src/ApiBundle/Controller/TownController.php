@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Town controller.
  *
- * @Route("town")
+ * @Route("/town")
  */
 class TownController extends Controller
 {
@@ -37,6 +37,43 @@ class TownController extends Controller
                 $response =  new Response($towns, Response::HTTP_OK);        
                 return $response;
     }
+
+    /**
+     * Lists all town entities.
+     *
+     * @Route("/page/{page}/{limit}", name="town_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+         $em = $this->getDoctrine()->getManager();
+        
+                $towns = $em->getRepository('ApiBundle:Town')->findAll();
+        
+                $response =  new Response($this->paginate($towns,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
+    }
+
 
     /**
      * Creates a new town entity.
@@ -115,14 +152,14 @@ class TownController extends Controller
         $town->setName($entity->getName());
         $town->setDescription($entity->getDescription()); 
         $town->setStatus($entity->getStatus());
-        $town->setTown($this->getDoctrine()
-        ->getRepository('ApiBundle:Town')
-        ->findOneBy(['id' => $entity->getTown()->getId()]));
+        $town->setRegion($this->getDoctrine()
+        ->getRepository('ApiBundle:Region')
+        ->findOneBy(['id' => $entity->getRegion()->getId()]));
         
         // Save our town
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
-         
+      return  $response;
     }
 
     /**

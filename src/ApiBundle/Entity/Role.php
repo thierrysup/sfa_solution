@@ -46,7 +46,7 @@ class Role
     /**
      * @var int
      *
-     * @ORM\Column(name="priority", type="integer")
+     * @ORM\Column(name="priority",nullable=true, type="integer")
      * @Type("int")
      */
     private $priority;

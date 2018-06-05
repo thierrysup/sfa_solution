@@ -65,7 +65,7 @@ class Town
      *
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\Sector", mappedBy="town",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\Sector>")
-     * @Exclude
+     * 
      */
     private $sectors;
 

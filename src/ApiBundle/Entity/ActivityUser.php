@@ -30,7 +30,7 @@ class ActivityUser
     /**
      * @var bool
      *
-     * @ORM\Column(name="editAuth", type="boolean")
+     * @ORM\Column(name="editAuth",nullable=true, type="boolean")
      * @Type("boolean")
      */
     private $editAuth;
@@ -38,7 +38,7 @@ class ActivityUser
     /**
      * @var bool
      *
-     * @ORM\Column(name="createAuth", type="boolean")
+     * @ORM\Column(name="createAuth",nullable=true, type="boolean")
      * @Type("boolean")
      */
     private $createAuth;
@@ -46,7 +46,7 @@ class ActivityUser
     /**
      * @var bool
      *
-     * @ORM\Column(name="deleteAuth", type="boolean")
+     * @ORM\Column(name="deleteAuth",nullable=true, type="boolean")
      * @Type("boolean")
      */
     private $deleteAuth;
@@ -62,7 +62,7 @@ class ActivityUser
     /**
      * @var bool
      *
-     * @ORM\Column(name="status", type="boolean")
+     * @ORM\Column(name="status",nullable=true, type="boolean")
      * @Type("boolean")
      */
     private $status;
@@ -78,7 +78,7 @@ class ActivityUser
      * 5 Region
      * 6 Country
      *
-     * @ORM\Column(name="zoneInfluence", type="integer")
+     * @ORM\Column(name="zoneInfluence",nullable=true, type="integer")
      * @Type("int")
      */
     private $zoneInfluence;
@@ -89,7 +89,7 @@ class ActivityUser
      * 1 operational
      * 2 office
      *
-     * @ORM\Column(name="mobility", type="integer")
+     * @ORM\Column(name="mobility",nullable=true, type="integer")
      * @Type("int")
      */
     private $mobility;
@@ -171,7 +171,6 @@ class ActivityUser
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
      * @Type("AppBundle\Entity\User")
      * @MaxDepth(1)
-     * @Exclude
      */
     private $user;
 
@@ -182,14 +181,13 @@ class ActivityUser
      * @ORM\JoinColumn(name="activity_id", referencedColumnName="id",nullable=true,onDelete="CASCADE")
      * @Type("ApiBundle\Entity\Activity")
      * @MaxDepth(1)
-     * @Exclude
      */
     private $activity;
 
 
-    public function __toString() {
+   /*  public function __toString() {
         return $this->getActivity()->getName()+" "+$this->getUser()->getUsername();
-    }
+    } */
 
     /**
      * Get id

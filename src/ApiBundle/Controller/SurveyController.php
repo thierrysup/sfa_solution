@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Survey controller.
  *
- * @Route("survey")
+ * @Route("/survey")
  */
 class SurveyController extends Controller
 {
@@ -36,6 +36,42 @@ class SurveyController extends Controller
         
                 $response =  new Response($survey, Response::HTTP_OK);        
                 return $response;
+    }
+
+    /**
+     * Lists all survey entities.
+     *
+     * @Route("/page/{page}/{limit}", name="survey_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $survey = $em->getRepository('ApiBundle:Survey')->findAll();
+        
+                $response =  new Response($this->paginate($survey,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**

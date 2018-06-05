@@ -14,7 +14,7 @@ use ApiBundle\Entity\ProductSurvey;
 /**
  * service controller.
  *
- * @Route("mobile")
+ * @Route("/mobile")
  */
 class MobileServiceController extends Controller
 {

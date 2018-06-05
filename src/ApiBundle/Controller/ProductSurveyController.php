@@ -17,7 +17,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Productsurvey controller.
  *
- * @Route("productsurvey")
+ * @Route("/productsurvey")
  */
 class ProductSurveyController extends Controller
 {
@@ -38,6 +38,42 @@ class ProductSurveyController extends Controller
         
                 $response =  new Response($productSurvey, Response::HTTP_OK);        
                 return $response;
+    }
+
+    /**
+     * Lists all productSurvey entities.
+     *
+     * @Route("/page/{page}/{limit}", name="productsurvey_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $productSurvey = $em->getRepository('ApiBundle:ProductSurvey')->findAll();
+                
+                $response =  new Response($this->paginate($productSurvey,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
 
@@ -124,6 +160,7 @@ class ProductSurveyController extends Controller
         $productSurvey->setQuantity($entity->getQuantity());
         $productSurvey->setDateSubmit($entity->getDateSubmit()); 
         $productSurvey->setQuantityIn($entity->getQuantityIn());
+        $productSurvey->setBaseline($entity->getBaseline());
         $productSurvey->setStatus($entity->getStatus());
         $productSurvey->setCommit($entity->getCommit());  
         //$productSurvey->setBaseline($entity->getBaseline());

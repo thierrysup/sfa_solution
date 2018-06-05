@@ -14,20 +14,96 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @ORM\Table(name="user")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\UserRepository")
- * @Serializer\ExclusionPolicy("none")
+ * @Serializer\ExclusionPolicy("all")
  */
 class User extends BaseUser
 {
+
     /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
+      *@ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
-     * @Type("int")
+     * @Serializer\Expose
+     * @Serializer\Type("int")
      */
     protected $id;
+    /**
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $username;
 
+    /**
+     * @var string The email of the user.
+     *
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $usernameCanonical;
+
+    /**
+     * @var string The email of the user.
+     *
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $email;
+
+
+    /**
+     * @var string The email of the user.
+     *
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $emailCanonical;
+
+    /**
+     * @var bool
+     * @Serializer\Expose
+     * @Serializer\Type("boolean")
+     */
+    protected $enabled;
+
+    
+
+    /**
+     * Encrypted password. Must be persisted.
+     *
+     * @var string
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $password;
+
+    
+
+    /**
+     * @var \DateTime|null
+     * @Serializer\Expose
+     * @Serializer\Type("DateTime")
+     */
+    protected $lastLogin;
+
+    
+
+    /**
+     * @var array
+     * @Serializer\Expose
+     * @Type("array")
+     */
+    protected $roles;
+
+
+     /**
+     * @var GroupInterface[]|Collection
+     * @Serializer\Expose
+     * @Type("array")
+     */
+    protected $groups;
+
+
+    
     /**
      * @var int
      *
@@ -35,7 +111,8 @@ class User extends BaseUser
      * 2 employ
      * 3 admin
      * @ORM\Column(name="type_user", type="integer",nullable=true)
-     * @Type("int")
+     * @Serializer\Expose
+     * @Serializer\Type("int")
      */
     protected $type_user;
 
@@ -43,7 +120,8 @@ class User extends BaseUser
      * @var string
      *
      * @ORM\Column(name="phone", type="string",nullable=true)
-     * @Type("string")
+     * @Serializer\Expose
+     * @Serializer\Type("string")
      */
     protected $phone;
 
@@ -54,7 +132,6 @@ class User extends BaseUser
      * @ORM\OneToMany(targetEntity="ApiBundle\Entity\ActivityUser", mappedBy="user",cascade={"remove"}, orphanRemoval=true)
      * @Type("ArrayCollection<ApiBundle\Entity\ActivityUser>")
      * @MaxDepth(1)
-     * @Exclude
      */
     protected $activityUsers;
 
@@ -82,6 +159,8 @@ class User extends BaseUser
         return $this;
     }
  
+    
+
     /**
      * Get typeUser
      *
@@ -198,4 +277,28 @@ class User extends BaseUser
         return $idAreas;
     }
 
+
+    /**
+     * Get the value of phone
+     *
+     * @return  string
+     */ 
+    public function getPhone()
+    {
+        return $this->phone;
+    }
+
+    /**
+     * Set the value of phone
+     *
+     * @param  string  $phone
+     *
+     * @return  self
+     */ 
+    public function setPhone(string $phone)
+    {
+        $this->phone = $phone;
+
+        return $this;
+    }
 }

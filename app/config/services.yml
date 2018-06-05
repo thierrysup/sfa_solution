@@ -17,4 +17,7 @@ services:
 
     mobile_services:
         class: ApiBundle\Service\MobileService
+    
+    search_services:
+        class: ApiBundle\Service\SearchService
         arguments: [ "@doctrine.orm.entity_manager" ]

@@ -72,6 +72,7 @@ class Entreprise
      * @var string
      *
      * @ORM\Column(name="colorStyle", type="string", length=255)
+     * @Serializer\SerializedName("colorStyle")
      * @Type("string")
      */
     private $colorStyle;
@@ -80,6 +81,7 @@ class Entreprise
      * @var string
      * @Assert\Image()
      * @ORM\Column(name="logoURL", type="string", length=255)
+     * @Serializer\SerializedName("logoURL")
      * @Type("string")
      */
     private $logoURL;

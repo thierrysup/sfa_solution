@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Role controller.
  *
- * @Route("role")
+ * @Route("/role")
  */
 class RoleController extends Controller
 {
@@ -36,6 +36,42 @@ class RoleController extends Controller
         
                 $response =  new Response($role, Response::HTTP_OK);        
                 return $response;
+    }
+
+    /**
+     * Lists all role entities.
+     *
+     * @Route("/page/{page}/{limit}", name="role_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $role = $em->getRepository('ApiBundle:Role')->findAll();
+        
+                $response =  new Response($this->paginate($role,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -116,7 +152,7 @@ class RoleController extends Controller
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
 
-
+      return  $response;
     }
 
     /**

@@ -30,7 +30,7 @@ security:
 
     providers:
        fos_userbundle:
-                   id: fos_user.user_provider.username
+                   id: fos_user.user_provider.username_email
 
     firewalls:
         # disables authentication for assets and the profiler, adapt it according to your needs
@@ -66,7 +66,7 @@ security:
 
         main:
             anonymous: ~
-
+        
     access_control:
             - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
             - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }

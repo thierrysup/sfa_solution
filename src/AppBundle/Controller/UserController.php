@@ -28,11 +28,11 @@ class UserController extends Controller
     public function indexAction()
     {
 
-       /*  $user = $this->get('security.context')->getToken()->getUser();
+         $user = $this->get('security.token_storage')->getToken()->getUser();
         if (!is_object($user)) {
             return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
-        } */
-
+        }  
+        
         $em = $this->getDoctrine()->getManager();
         
         $user = $em->getRepository('AppBundle:User')->findAll();
@@ -43,6 +43,52 @@ class UserController extends Controller
         return new Response($user, Response::HTTP_OK);
     }
 
+
+     /**
+     * Lists all activity entities.
+     *
+     * @Route("/page/{page}/{limit}", name="user_page_index")
+     * @Method("GET")
+     *
+     * @return Response
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        if (!is_object($user)) {
+            return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
+        } 
+
+        $em = $this->getDoctrine()->getManager();
+        
+                $users = $em->getRepository('AppBundle:User')->findAll();
+
+                 //$serializer = SerializerBuilder::create()->build();
+                 //$data = $serializer->serialize($activity, 'json');
+
+                $response =  new Response($this->paginate($users,$page,$limit), Response::HTTP_OK);
+            return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
+    }
 
      /**
      * Creates a new user entity.
@@ -99,10 +145,10 @@ class UserController extends Controller
     public function newAction(Request $request)
     {
 
-        $user = $this->get('security.context')->getToken()->getUser();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
         if (!is_object($user)) {
             return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
-        }
+        } 
 
         $data = $request->getContent();
 
@@ -110,23 +156,22 @@ class UserController extends Controller
         $serializer = SerializerBuilder::create()->build();
         $entity = $serializer->deserialize($data,'AppBundle\Entity\User', 'json');
 
-
-            $user = new User();
-            $user->setUsername($entity->getUsername());
-            $user->setLogin($entity->getLogin());
-            $user->setEmail($entity->getEmail());
-            $user->setPassword($entity->getPassword());
-            $user->setPlainPassword($entity->getPlainPassword());
-            $user->setTypeUser($entity->getTypeUser());
-            if ($entity->getTypeUser() === 3) {
-                $user->addRole("ROLE_ADMIN");
-            }
-            $user->setPhone($entity->getPhone());
-            $user->setEnabled(true);
-            $this->get('fos_user.user_manager')->updateUser($user);
-
-            //$em->persist($entity);
-           // $em->flush();
+        //  var_dump($entity);
+         // die();
+        $userManager = $this->get('fos_user.user_manager');
+        $user = $userManager->createUser();
+        $user->setUsername($entity->getUsername());
+        $user->setEmail($entity->getEmail());
+        $user->setEmailCanonical($entity->getEmail());
+        $user->setTypeUser($entity->getTypeUser());
+        if ($entity->getTypeUser() === 3) {
+            $user->addRole("ROLE_ADMIN");
+        }
+        $user->setPhone($entity->getPhone());
+        $user->setEnabled(1); // enable the user or enable it later with a confirmation token in the email
+        // this method will encrypt the password with the default settings :)
+        $user->setPlainPassword($entity->getPassword());
+        $userManager->updateUser($user);
 
             return new JsonResponse("created new user id".$user->getId(), Response::HTTP_OK);;
 
@@ -141,7 +186,7 @@ class UserController extends Controller
         public function sessionUserAction()
         {
 
-            $user = $this->get('security.context')->getToken()->getUser();
+            $user = $this->get('security.token_storage')->getToken()->getUser();
             if (!is_object($user)) {
                 return new JsonResponse('go to login ...', Response::HTTP_NOT_FOUND);
             }
@@ -159,10 +204,10 @@ class UserController extends Controller
         public function showAction($id)
         {
 
-            $user = $this->get('security.context')->getToken()->getUser();
+             $user = $this->get('security.token_storage')->getToken()->getUser();
             if (!is_object($user)) {
                 return new JsonResponse('go to login ...', Response::HTTP_NOT_FOUND);
-            }
+            } 
         
             $user = $this->getDoctrine()->getRepository('AppBundle:User')->findOneBy(['id' => $id]);
 
@@ -186,10 +231,11 @@ class UserController extends Controller
     public function editAction(Request $request, $id)
     {
 
-        if (!$this->get('security.context')->isGranted('ROLE_ADMIN')) {
+        if (!$this->get('security.authorization_checker')->isGranted('ROLE_USER')) {
             return new JsonResponse('Administrator page !!!',Response::HTTP_OK);
           }
-        $user = $this->get('security.context')->getToken()->getUser();
+       // $user = $this->get('security.context')->getToken()->getUser();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
         if (!is_object($user)) {
             return new JsonResponse('user not found or not authenticate ...', Response::HTTP_NOT_FOUND);
         }
@@ -203,16 +249,20 @@ class UserController extends Controller
         $em = $this->getDoctrine()->getManager();
 
         $entity = $em->getRepository('AppBundle:User')->find($id);
-        $userManager = $this->get('fos_user.user_manager');
-
+       
         if (!$entity) {
             return new JsonResponse('any user with this id ...', Response::HTTP_NOT_FOUND);
         }
-            $user =  $this->userManager->findUserByUsername($entity->getUsername());
+
+        // var_dump($newEntity);
+        // die();
+        $userManager = $this->get('fos_user.user_manager');
+        $user = $userManager->findUserBy(array('id'=> $id));
+            //$user =  $this->userManager->findUserByUsername($entity->getUsername());
 
             $user->setUsername($newEntity->getUsername());
             $user->setEmail($newEntity->getEmail());
-            $user->setPassword($newEntity->getPassword());
+            //$user->setPassword($newEntity->getPassword());
             $user->setPlainPassword($newEntity->getPlainPassword());
             $user->setPhone($newEntity->getPhone());
             $user->setTypeUser($newEntity->getTypeUser());
@@ -223,10 +273,10 @@ class UserController extends Controller
                     $user->addRole("ROLE_USER");
                 }
             }
-            $this->userManager->updateUser($user);
+            $userManager->updateUser($user);
 
-            $em->flush();
-        return null;
+            //$em->flush();
+        return new Response($user, Response::HTTP_OK);
     }
 
     /**
@@ -237,10 +287,10 @@ class UserController extends Controller
      */
     public function deleteAction(Request $request, User $id)
     {
-       /*  if (!$this->get('security.context')->isGranted('ROLE_ADMIN')) {
+        if (!$this->get('security.authorization_checker')->isGranted('ROLE_USER')) {
             return new JsonResponse('Administrator page !!!',Response::HTTP_OK);
           }
- */
+ 
       $em = $this->getDoctrine()->getManager();
       $user = $this->getDoctrine()->getRepository('AppBundle:User')->find($id);
       if (empty($user)) {

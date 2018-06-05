@@ -20,7 +20,7 @@ framework:
     form:            ~
     csrf_protection: ~
     validation:      { enable_annotations: true }
-    serializer:      { enable_annotations: true }
+    #serializer:      { enable_annotations: true }
     templating:
         engines: ['twig']
     default_locale:  "%locale%"
@@ -68,6 +68,10 @@ swiftmailer:
     password:  "%mailer_password%"
     spool:     { type: memory }
 
+
+jms_serializer: ~
+            
+
 # FosUser Configuration
 fos_user:
     db_driver: orm # other valid values are 'mongodb', 'couchdb' and 'propel'
@@ -78,15 +82,38 @@ fos_user:
         sender_name: "%mailer_user%"
 
 lexik_jwt_authentication:
-    private_key_path: '%kernel.root_dir%/../var/jwt/private.pem'
-    public_key_path:  '%kernel.root_dir%/../var/jwt/public.pem'
-    pass_phrase:      themeM2
+    private_key_path: '%kernel.root_dir%/../config/jwt/private.pem'
+    public_key_path:  '%kernel.root_dir%/../config/jwt/public.pem'
+    pass_phrase:      'iconprod'
     token_ttl:        3600
+    user_identity_field: username
+
+    # token encoding/decoding settings
+    encoder:
+        # token encoder/decoder service - default implementation based on the namshi/jose library
+        service:            lexik_jwt_authentication.encoder.default
+        # crypto engine used by the encoder service
+        crypto_engine:  openssl
+        # encryption algorithm used by the encoder service
+        signature_algorithm: RS256
+
+    # token extraction settings
+    token_extractors:
+        authorization_header:      # look for a token as Authorization Header
+            enabled: true
+            prefix:  Bearer
+            name:    Authorization
+        cookie:                    # check token in a cookie
+            enabled: false
+            name:    BEARER
+        query_parameter:           # check token in query string parameter
+            enabled: false
+            name:    bearer
 
 nelmio_cors:
         defaults:
             allow_credentials: false
-            allow_origin: ['http://localhost:4200']
+            allow_origin: ['http://localhost:8100']
             allow_headers: ["content-type", "authorization"]
             allow_methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS"]
             expose_headers: []
@@ -99,3 +126,11 @@ nelmio_cors:
                 allow_headers: ['*']
                 allow_methods: ['POST', 'PUT', 'GET', 'DELETE','OPTIONS','HEAD']
                 max_age: 3600
+# KNP Paginator
+knp_paginator:
+    page_range: 5                      # default page range used in pagination control
+    default_options:
+        page_name: page                # page query parameter name
+        sort_field_name: sort          # sort field query parameter name
+        sort_direction_name: direction # sort direction query parameter name
+        distinct: true                 # ensure distinct results, useful when ORM queries are using GROUP BY statements

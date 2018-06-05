@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Product controller.
  *
- * @Route("product")
+ * @Route("/product")
  */
 class ProductController extends Controller
 {
@@ -36,6 +36,42 @@ class ProductController extends Controller
         
                 $response =  new Response($product, Response::HTTP_OK);        
                 return $response;
+    }
+
+    /**
+     * Lists all  entities.
+     *
+     * @Route("/page/{page}/{limit}", name="product_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $product = $em->getRepository('ApiBundle:Product')->findAll();
+        
+                $response =  new Response($this->paginate($product,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -73,7 +109,7 @@ class ProductController extends Controller
      * @Route("/{id}", name="product_show")
      * @Method("GET")
      */
-    public function showAction(Product $product)
+    public function showAction($id)
     {
         $product = $this->getDoctrine()
         ->getRepository('ApiBundle:Product')
@@ -124,7 +160,7 @@ class ProductController extends Controller
         // Save our product
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
-
+      return  $response;
 
     }
 

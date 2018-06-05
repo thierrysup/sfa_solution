@@ -15,7 +15,7 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Target controller.
  *
- * @Route("target")
+ * @Route("/target")
  */
 class TargetController extends Controller
 {
@@ -36,6 +36,42 @@ class TargetController extends Controller
         
                 $response =  new Response($target, Response::HTTP_OK);        
                 return $response;
+    }
+
+      /**
+     * Lists all target entities.
+     *
+     * @Route("/page/{page}/{limit}", name="target_page_index")
+     * @Method("GET")
+     */
+    public function indexPageAction($page,$limit)
+    {
+        $em = $this->getDoctrine()->getManager();
+        
+                $target = $em->getRepository('ApiBundle:Target')->findAll();
+        
+                $response =  new Response($this->paginate($target,$page,$limit), Response::HTTP_OK);        
+                return $response;
+    }
+
+    public function paginate($array,$page,$limit){
+        $pager=$this->get('knp_paginator');
+        $paginated=$pager->paginate($array,$page, $limit);
+
+        $resItems = ($paginated->getTotalItemCount()%$limit);
+        $numPages = (int)($paginated->getTotalItemCount()/$limit);
+        $totalPages = ($resItems === 0) ? $numPages : $numPages + 1 ;
+
+        $serializer = $this->get('jms_serializer');
+        $data = $serializer->serialize([
+            'page'=> intval($paginated->getCurrentPageNumber()),
+            'relativesTotal'=> count($paginated->getItems()),
+            'globalTotal'=> $paginated->getTotalItemCount(),
+            'numberOfPages'  => $totalPages ,
+            'limit'  => intval($limit),
+            'items' => $paginated->getItems()
+        ], 'json');
+        return $data;
     }
 
     /**
@@ -128,7 +164,7 @@ class TargetController extends Controller
         // Save our target
          $em->flush();
       $response =  new JsonResponse('It\'s probably been updated', Response::HTTP_OK);
-
+      return  $response;
     }
 
     /**

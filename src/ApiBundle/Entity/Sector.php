@@ -38,7 +38,7 @@ class Sector
     /**
      * @var string
      *
-     * @ORM\Column(name="code", type="string", length=15)
+     * @ORM\Column(name="code", type="string",nullable=true, length=15)
      * @Type("string")
      */
     private $code;
