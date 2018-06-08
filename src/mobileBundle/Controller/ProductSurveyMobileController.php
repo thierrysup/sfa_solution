@@ -1,8 +1,9 @@
 <?php
 
-namespace ApiBundle\Controller;
+namespace mobileBundle\Controller;
 
-
+use ApiBundle\Entity\Product;
+use ApiBundle\Entity\Activity;
 use ApiBundle\Entity\ProductSurvey;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
@@ -19,12 +20,12 @@ use JMS\Serializer\SerializerBuilder;
  *
  * @Route("/productsurvey")
  */
-class ProductSurveyController extends Controller
+class ProductSurveyMobileController extends Controller
 {
     /**
      * Lists all productSurvey entities.
      *
-     * @Route("/", name="productsurvey_index")
+     * @Route("/", name="mobile_productsurvey_index")
      * @Method("GET")
      */
     public function indexAction()
@@ -43,7 +44,7 @@ class ProductSurveyController extends Controller
     /**
      * Lists all productSurvey entities.
      *
-     * @Route("/page/{page}/{limit}", name="productsurvey_page_index")
+     * @Route("/page/{page}/{limit}", name="mobile_productsurvey_page_index")
      * @Method("GET")
      */
     public function indexPageAction($page,$limit)
@@ -80,7 +81,7 @@ class ProductSurveyController extends Controller
     /**
      * Creates a new productSurvey entity.
      *
-     * @Route("/new", name="productsurvey_new")
+     * @Route("/new", name="mobile_productsurvey_new")
      * @Method({"POST"})
      */
     public function newAction(Request $request)
@@ -116,7 +117,7 @@ class ProductSurveyController extends Controller
     /**
      * Finds and displays a productSurvey entity.
      *
-     * @Route("/{id}", name="productsurvey_show")
+     * @Route("/{id}", name="mobile_productsurvey_show")
      * @Method("GET")
      */
     public function showAction($id)
@@ -139,7 +140,7 @@ class ProductSurveyController extends Controller
     /**
      * Displays a form to edit an existing productSurvey entity.
      *
-     * @Route("/{id}/edit", name="productsurvey_edit")
+     * @Route("/{id}/edit", name="mobile_productsurvey_edit")
      * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
@@ -181,7 +182,7 @@ class ProductSurveyController extends Controller
     /**
      * Deletes a productSurvey entity.
      *
-     * @Route("/{id}", name="productsurvey_delete")
+     * @Route("/{id}", name="mobile_productsurvey_delete")
      * @Method("DELETE")
      */
     public function deleteAction(Request $request, $id)

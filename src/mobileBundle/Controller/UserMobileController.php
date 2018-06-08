@@ -1,6 +1,6 @@
 <?php
 
-namespace AppBundle\Controller;
+namespace mobileBundle\Controller;
 
 use AppBundle\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -15,14 +15,14 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * User controller.
  *
- * @Route("/User")
+ * @Route("/mobileUser")
  */
-class UserController extends Controller
+class UserMobileController extends Controller
 {
     /**
      * Lists all user entities.
      *
-     * @Route("/", name="user_index")
+     * @Route("/", name="mobile_user_index")
      * @Method("GET")
      */
     public function indexAction()
@@ -47,7 +47,7 @@ class UserController extends Controller
      /**
      * Lists all activity entities.
      *
-     * @Route("/page/{page}/{limit}", name="user_page_index")
+     * @Route("/page/{page}/{limit}", name="mobile_user_page_index")
      * @Method("GET")
      *
      * @return Response
@@ -95,7 +95,7 @@ class UserController extends Controller
     /**
      * Creates a new user entity.
      *
-     * @Route("/new", name="user_new")
+     * @Route("/new", name="mobile_user_new")
      * @Method({"POST"})
      * @return Response
      */
@@ -137,29 +137,35 @@ class UserController extends Controller
         /**
          * Finds and displays a user entity.
          *
-         * @Route("/session/{username}", name="user_session_show")
+         * @Route("/session/{username}", name="mobile_user_session_show")
          * @Method({"GET"})
          */
         public function sessionUserAction($username)
         {
 
-            $user = $this->get('security.token_storage')->getToken()->getUser();
-            if ((!is_object($user)&&($user->getUsername() !== $username))) {
-                return new JsonResponse('go to login ...', Response::HTTP_NOT_FOUND);
-            }
+          //  $user = $this->get('security.token_storage')->getToken()->getUser();
+          // $user = $this->container->get('security.context')->getToken()->getUser();
+            $user = $this->getDoctrine()
+        ->getRepository('AppBundle:User')
+        ->findOneBy(['username' => $username]);
+        $serializer = SerializerBuilder::create()->build();
+        $user = $serializer->serialize($user, 'json');
+           
 
-            $serializer = SerializerBuilder::create()->build();
-            $user = $serializer->serialize($user, 'json');
+           
+            
             // var_dump($user);
             // die();
-            return new Response($user, Response::HTTP_OK);
+            return new Response($user, Response::HTTP_OK); 
+
+            
         }
 
 
         /**
          * Finds and displays a user entity.
          *
-         * @Route("/{id}", name="user_show")
+         * @Route("/{id}", name="mobile_user_show")
          * @Method({"GET"})
          */
         public function showAction($id)
@@ -167,7 +173,7 @@ class UserController extends Controller
 
              $user = $this->get('security.token_storage')->getToken()->getUser();
             if (!is_object($user)) {
-                return new JsonResponse('go to login ...', Response::HTTP_NOT_FOUND);
+                return new JsonResponse('go to login id ...', Response::HTTP_NOT_FOUND);
             } 
         
             $user = $this->getDoctrine()->getRepository('AppBundle:User')->findOneBy(['id' => $id]);
@@ -186,7 +192,7 @@ class UserController extends Controller
     /**
      * Displays a form to edit an existing user entity.
      *
-     * @Route("/{id}/edit", name="user_edit")
+     * @Route("/{id}/edit", name="mobile_user_edit")
      * @Method({"PUT"})
      */
     public function editAction(Request $request, $id)
@@ -243,7 +249,7 @@ class UserController extends Controller
     /**
      * Deletes a user entity.
      *
-     * @Route("/{id}", name="user_delete")
+     * @Route("/{id}", name="mobile_user_delete")
      * @Method("DELETE")
      */
     public function deleteAction(Request $request, User $id)
