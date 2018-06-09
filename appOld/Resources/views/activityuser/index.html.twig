@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Activityusers list</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Editauth</th>
+                <th>Createauth</th>
+                <th>Deleteauth</th>
+                <th>Datesubmit</th>
+                <th>Status</th>
+                <th>Zoneinfluence</th>
+                <th>Mobility</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for activityUser in activityUsers %}
+            <tr>
+                <td><a href="{{ path('activityuser_show', { 'id': activityUser.id }) }}">{{ activityUser.id }}</a></td>
+                <td>{% if activityUser.editAuth %}Yes{% else %}No{% endif %}</td>
+                <td>{% if activityUser.createAuth %}Yes{% else %}No{% endif %}</td>
+                <td>{% if activityUser.deleteAuth %}Yes{% else %}No{% endif %}</td>
+                <td>{% if activityUser.dateSubmit %}{{ activityUser.dateSubmit|date('Y-m-d') }}{% endif %}</td>
+                <td>{% if activityUser.status %}Yes{% else %}No{% endif %}</td>
+                <td>{{ activityUser.zoneInfluence }}</td>
+                <td>{{ activityUser.mobility }}</td>
+                <td>
+                    <ul>
+                        <li>
+                            <a href="{{ path('activityuser_show', { 'id': activityUser.id }) }}">show</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('activityuser_edit', { 'id': activityUser.id }) }}">edit</a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('activityuser_new') }}">Create a new activityUser</a>
+        </li>
+    </ul>
+{% endblock %}

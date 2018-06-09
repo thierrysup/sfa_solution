@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Productsurveys list</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Quantity</th>
+                <th>Datesubmit</th>
+                <th>Quantityin</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for productSurvey in productSurveys %}
+            <tr>
+                <td><a href="{{ path('productsurvey_show', { 'id': productSurvey.id }) }}">{{ productSurvey.id }}</a></td>
+                <td>{{ productSurvey.quantity }}</td>
+                <td>{% if productSurvey.dateSubmit %}{{ productSurvey.dateSubmit|date('Y-m-d') }}{% endif %}</td>
+                <td>{{ productSurvey.quantityIn }}</td>
+                <td>{% if productSurvey.status %}Yes{% else %}No{% endif %}</td>
+                <td>
+                    <ul>
+                        <li>
+                            <a href="{{ path('productsurvey_show', { 'id': productSurvey.id }) }}">show</a>
+                        </li>
+                        <li>
+                            <a href="{{ path('productsurvey_edit', { 'id': productSurvey.id }) }}">edit</a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('productsurvey_new') }}">Create a new productSurvey</a>
+        </li>
+    </ul>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Productsurvey</h1>
+
+    <table>
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ productSurvey.id }}</td>
+            </tr>
+            <tr>
+                <th>Quantity</th>
+                <td>{{ productSurvey.quantity }}</td>
+            </tr>
+            <tr>
+                <th>Datesubmit</th>
+                <td>{% if productSurvey.dateSubmit %}{{ productSurvey.dateSubmit|date('Y-m-d') }}{% endif %}</td>
+            </tr>
+            <tr>
+                <th>Quantityin</th>
+                <td>{{ productSurvey.quantityIn }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{% if productSurvey.status %}Yes{% else %}No{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('productsurvey_index') }}">Back to the list</a>
+        </li>
+        <li>
+            <a href="{{ path('productsurvey_edit', { 'id': productSurvey.id }) }}">Edit</a>
+        </li>
+        <li>
+            {{ form_start(delete_form) }}
+                <input type="submit" value="Delete">
+            {{ form_end(delete_form) }}
+        </li>
+    </ul>
+{% endblock %}

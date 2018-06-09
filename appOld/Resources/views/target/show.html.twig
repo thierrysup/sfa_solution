@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Target</h1>
+
+    <table>
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ target.id }}</td>
+            </tr>
+            <tr>
+                <th>Quantity</th>
+                <td>{{ target.quantity }}</td>
+            </tr>
+            <tr>
+                <th>Startdate</th>
+                <td>{% if target.startDate %}{{ target.startDate|date('Y-m-d') }}{% endif %}</td>
+            </tr>
+            <tr>
+                <th>Enddate</th>
+                <td>{% if target.endDate %}{{ target.endDate|date('Y-m-d') }}{% endif %}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ target.description }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{% if target.status %}Yes{% else %}No{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('target_index') }}">Back to the list</a>
+        </li>
+        <li>
+            <a href="{{ path('target_edit', { 'id': target.id }) }}">Edit</a>
+        </li>
+        <li>
+            {{ form_start(delete_form) }}
+                <input type="submit" value="Delete">
+            {{ form_end(delete_form) }}
+        </li>
+    </ul>
+{% endblock %}

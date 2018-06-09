@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Country</h1>
+
+    <table>
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ country.id }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>{{ country.name }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ country.description }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{% if country.status %}Yes{% else %}No{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ul>
+        <li>
+            <a href="{{ path('country_index') }}">Back to the list</a>
+        </li>
+        <li>
+            <a href="{{ path('country_edit', { 'id': country.id }) }}">Edit</a>
+        </li>
+        <li>
+            {{ form_start(delete_form) }}
+                <input type="submit" value="Delete">
+            {{ form_end(delete_form) }}
+        </li>
+    </ul>
+{% endblock %}
