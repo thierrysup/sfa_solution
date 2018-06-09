@@ -135,6 +135,34 @@ class User extends BaseUser
      */
     protected $phone;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="firstname", type="string",nullable=true)
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $firstname;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="lastname", type="string",nullable=true)
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $lastname;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="address", type="string",nullable=true)
+     * @Serializer\Expose
+     * @Serializer\Type("string")
+     */
+    protected $address;
+
+
 
     /**
      * @var ActivityUser[] Available ActivityUsers for this user.
@@ -332,6 +360,78 @@ class User extends BaseUser
     public function setIsChange(bool $isChange)
     {
         $this->isChange = $isChange;
+        return $this;
+    }
+
+    /**
+     * Get the value of firstname
+     *
+     * @return  string
+     */ 
+    public function getFirstname()
+    {
+        return $this->firstname;
+    }
+
+    /**
+     * Set the value of firstname
+     *
+     * @param  string  $firstname
+     *
+     * @return  self
+     */ 
+    public function setFirstname(string $firstname)
+    {
+        $this->firstname = $firstname;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of lastname
+     *
+     * @return  string
+     */ 
+    public function getLastname()
+    {
+        return $this->lastname;
+    }
+
+    /**
+     * Set the value of lastname
+     *
+     * @param  string  $lastname
+     *
+     * @return  self
+     */ 
+    public function setLastname(string $lastname)
+    {
+        $this->lastname = $lastname;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of address
+     *
+     * @return  string
+     */ 
+    public function getAddress()
+    {
+        return $this->address;
+    }
+
+    /**
+     * Set the value of address
+     *
+     * @param  string  $address
+     *
+     * @return  self
+     */ 
+    public function setAddress(string $address)
+    {
+        $this->address = $address;
+
         return $this;
     }
 }
