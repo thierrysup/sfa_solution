@@ -67,6 +67,7 @@ class EntrepriseController extends Controller
         $data = $request->files->get('Image');
        
          $image=$data;
+        
          $imageName=md5(uniqid()).'.'.$image->guessExtension();
          $image->move($this->getParameter('image_directory'),$imageName);
 
@@ -96,6 +97,7 @@ class EntrepriseController extends Controller
         //var_dump($data['name']);
         //die();
         //va
+        
           $entreprise->setLogoURL($data['logoURL']);
           $entreprise->setColorStyle($data['colorStyle']);
         // Add our quote to Doctrine so that it can be saved
@@ -494,6 +496,23 @@ class EntrepriseController extends Controller
         $service = $this->get('logic_services');
 
         $resumeDatas = $service->pointingResource(intval($id_act),date('Y-m-d',strtotime($start_date)),date('Y-m-d',strtotime($end_date)));
+
+        return new Response($this->paginate($resumeDatas,$page,$limit),Response::HTTP_OK);
+    }
+    
+
+    /**
+     * get all activities function
+     *
+     *@Route("/activities/{id_user}/{page}/{limit}", name="surveys_all_activities_index")
+     * @Method("GET")
+     * @return void
+     */
+    public function findActivitiesByUserIdAction($id_user,$page,$limit){
+
+        $service = $this->get('logic_services');
+
+        $resumeDatas = $service->findActivitiesByUserId(intval($id_user));
 
         return new Response($this->paginate($resumeDatas,$page,$limit),Response::HTTP_OK);
     }

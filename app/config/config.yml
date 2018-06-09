@@ -71,7 +71,6 @@ swiftmailer:
 
 
 jms_serializer: ~
-            
 
 # FosUser Configuration
 fos_user:
